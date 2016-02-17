@@ -3,6 +3,7 @@ package com.blade.jdbc.test;
 import java.util.List;
 
 import com.blade.jdbc.AR;
+import com.blade.jdbc.ARJob;
 import com.blade.jdbc.DB;
 
 public class ARTest {
@@ -42,6 +43,24 @@ public class ARTest {
 		
 		int count3 = AR.insertEntity(user).commit();
 		System.out.println(count3);
+		
+		AR.update(User.class);
+		
+		Integer c = new ARJob<Integer>() {
+			@Override
+			public Integer execute() {
+				
+				conn = AR.updateById(User.class, 14)
+				.set("user_name", "jaack")
+				.set("age", 2).executeUpdate();
+				
+				AR.updateById(User.class, 14)
+				.set("user_name", "jaack")
+				.set("age", 2).executeUpdate(conn);
+				
+				return null;
+			}
+		}.call();
 	}
 
 }

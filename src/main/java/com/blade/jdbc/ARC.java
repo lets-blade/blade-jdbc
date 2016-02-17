@@ -34,6 +34,8 @@ public class ARC<T> {
 	
 	private T bind;
 	
+	private boolean isExecuteUpdate = false;
+	
 	private String orderBy;
 	private String groupBy;
 	private StringBuffer sql;
@@ -176,25 +178,33 @@ public class ARC<T> {
 	
 	ARC<T> search() {
 		this.sql = new StringBuffer("select * from " + this.tableName);
-		connection = DB.sql2o.open();
+		if(null == this.connection){
+			this.connection = DB.sql2o.open();
+		}
 		return this;
 	}
 	
 	ARC<T> update() {
 		this.sql = new StringBuffer("update " + this.tableName);
-		connection = DB.sql2o.beginTransaction();
+		if(null == this.connection){
+			this.connection = DB.sql2o.beginTransaction();
+		}
 		return this;
 	}
 	
 	ARC<T> delete() {
 		this.sql = new StringBuffer("delete from " + this.tableName);
-		connection = DB.sql2o.beginTransaction();
+		if(null == this.connection){
+			this.connection = DB.sql2o.beginTransaction();
+		}
 		return this;
 	}
 	
 	ARC<T> insert() {
 		this.sql = new StringBuffer("insert into " + this.tableName);
-		connection = DB.sql2o.beginTransaction();
+		if(null == this.connection){
+			this.connection = DB.sql2o.beginTransaction();
+		}
 		return this;
 	}
 	
@@ -266,8 +276,12 @@ public class ARC<T> {
 		return this;
 	}
 	
-	public int commit(){
-		
+	public Connection executeUpdate(Connection connection){
+		this.connection = connection;
+		return this.executeUpdate();
+	}
+	
+	public Connection executeUpdate(){
 		if(optType == OptType.UPDATE){
 			this.update();
 			if(null != pk){
@@ -298,16 +312,24 @@ public class ARC<T> {
 		
 		try {
 			Query query = query();
-			int result = query.executeUpdate().getResult();
-			connection.commit();
-			return result;
+			query.executeUpdate();
+			isExecuteUpdate = true;
+			return connection;
 		} catch (Exception e) {
 			connection.rollback();
 			e.printStackTrace();
-		} finally {
-			if(null != connection){
-				connection.close();
+		}
+		return null;
+	}
+	
+	public int commit(){
+		if(null != connection){
+			if(!isExecuteUpdate){
+				this.executeUpdate();
 			}
+			int result = connection.getResult();
+			connection.commit();
+			return result;
 		}
 		return 0;
 	}

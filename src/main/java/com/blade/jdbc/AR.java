@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 public final class AR {
 
+	public static Object exec;
+
 	private AR() {
 	}
 	
@@ -48,7 +50,7 @@ public final class AR {
 		ARC<T> arc = new ARC<T>(type, OptType.QUERY, null);
 		return arc.findByPk(pk);
 	}
-
+	
 	public static Object[] in(Object... args) {
 		return args;
 	}

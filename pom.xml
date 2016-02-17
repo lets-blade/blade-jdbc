@@ -8,10 +8,10 @@
 		<artifactId>blade-root</artifactId>
 		<version>1.0</version>
 	</parent>
-
+	
 	<artifactId>blade-jdbc</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>blade-jdbc</name>
 	<url>https://github.com/biezhi/blade/tree/master/blade-jdbc</url>
 
