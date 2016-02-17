@@ -1,5 +1,8 @@
 package com.blade.jdbc.test;
 
+import com.blade.jdbc.annotation.Table;
+
+@Table("user_t")
 public class User {
 
 	private Integer id;

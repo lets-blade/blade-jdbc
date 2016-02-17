@@ -8,7 +8,7 @@ import com.blade.jdbc.ds.BasicDataSourceImpl;
 
 public class DB {
 	
-	static Sql2o sql2o;
+	public static Sql2o sql2o;
 	
 	public static void open(DataSource dataSource) {
 		try {

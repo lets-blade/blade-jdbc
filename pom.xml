@@ -26,6 +26,11 @@
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.bladejava</groupId>
+			<artifactId>blade-kit</artifactId>
+			<version>1.2.9-alpha</version>
+		</dependency>
+		<dependency>
 			<groupId>org.sql2o</groupId>
 			<artifactId>sql2o</artifactId>
 			<version>1.5.4</version>
