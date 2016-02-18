@@ -30,13 +30,10 @@ public class ARC {
 		for(int i=1, len = args.length; i<=len; i++){
 			this.executeSql = this.executeSql.replaceFirst("\\?", ":p" + i); 
 		}
-		
 	}
 	
 	private Query buildQuery(){
-		
 		Query query = connection.createQuery(executeSql);
-		
 		LOGGER.info("execute sql: {}", executeSql);
 		if(null != args && args.length > 0){
 			query.withParams(args);
@@ -56,33 +53,54 @@ public class ARC {
 	}
 	
 	public <T> List<T> list(Class<T> type) {
-		
 		autoAdd(OptType.QUERY, type);
-		
 		Query query = buildQuery();
-		List<T> result = query.executeAndFetch(type);
-		close(false);
+		List<T> result = null;
+		try {
+			result = query.executeAndFetch(type);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			close(false);
+		}
 		return result;
 	}
 	
 	public <T> T first(Class<T> type) {
-		
 		autoAdd(OptType.QUERY, type);
-		
-		Query query = buildQuery();
-		T result = query.executeAndFetchFirst(type);
-		close(false);
+		Query query = this.buildQuery();
+		T result = null;
+		try {
+			result = query.executeAndFetchFirst(type);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			close(false);
+		}
+		return result;
+	}
+	
+	public long count() {
+		Query query = this.buildQuery();
+		long result = 0;
+		try {
+			result = query.executeAndFetchFirst(Long.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			close(false);
+		}
 		return result;
 	}
 	
 	public Connection next() {
-		Query query = buildQuery();
+		Query query = this.buildQuery();
 		return query.executeUpdate();
 	}
 	
 	public int commit() {
 		try {
-			Query query = buildQuery();
+			Query query = this.buildQuery();
 			int result = query.executeUpdate().getResult();
 			return result;
 		} catch (Exception e) {
@@ -95,7 +113,7 @@ public class ARC {
 	
 	public Object key() {
 		try {
-			Query query = buildQuery();
+			Query query = this.buildQuery();
 			Object result = query.executeUpdate().getKey();
 			return result;
 		} catch (Exception e) {

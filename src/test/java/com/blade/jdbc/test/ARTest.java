@@ -47,4 +47,10 @@ public class ARTest {
 		
 	}
 	
+	@Test
+	public void testCount(){
+		long c1 = AR.executeSQL("select count(1) from user_t").count();
+		System.out.println(c1);
+	}
+	
 }
