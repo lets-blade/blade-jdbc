@@ -4,11 +4,12 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.blade.jdbc.DB;
 import com.blade.jdbc.DBJob;
+
+import blade.kit.logging.Logger;
+import blade.kit.logging.LoggerFactory;
 
 public class CRUDTest {
 
@@ -18,7 +19,7 @@ public class CRUDTest {
 	public void before() {
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);
 	}
-
+	
 	@Test
 	public void testQuery() {
 		User user = new DBJob<User>() {
@@ -38,6 +39,7 @@ public class CRUDTest {
 		}.call();
 
 		LOGGER.info(list.toString());
+		
 	}
 
 	@Test

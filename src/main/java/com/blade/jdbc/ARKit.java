@@ -3,10 +3,13 @@ package com.blade.jdbc;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.blade.jdbc.annotation.Table;
+
+import blade.kit.Assert;
 
 public class ARKit {
 
@@ -27,14 +30,14 @@ public class ARKit {
         return count;
     }
 	
-	public static List<String> split(String str) {
-		Pattern pattern = Pattern.compile("(\\S+ (=|like|>|>=|<|<=|in|between|not in) \\?)", Pattern.CASE_INSENSITIVE);
-		Matcher matcher = pattern.matcher(str);
-		List<String> list = new ArrayList<String>();
-		while(matcher.find()){
-			list.add(matcher.group());
+	//select * from aaa 
+	public static boolean hasFrom(String sql) {
+		Pattern pattern = Pattern.compile("(select * from \\S+)", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(sql);
+		if(matcher.find()){
+			return true;
 		}
-        return list;
+		return false;
     }
 	
 	public static String[] getField(String str) {
@@ -50,6 +53,18 @@ public class ARKit {
 		}
         return arr;
     }
+	
+	public static <T> String tableName(Class<T> type){
+		Table table = type.getAnnotation(Table.class);
+		Assert.notNull(table, "The POJO @Table is null.");
+		return table.value();
+	}
+	
+	public static <T> String pkName(Class<T> type){
+		Table table = type.getAnnotation(Table.class);
+		Assert.notNull(table, "The POJO @Table is null.");
+		return table.PK();
+	}
 	
 	public static List<String> getFields(Class<?> type) {
 		if(null != type){
@@ -92,8 +107,6 @@ public class ARKit {
     }
 	
 	public static void main(String[] args) {
-		System.out.println(split("name like ? and age > ? and birthday <= ? and uid IN ? order by id desc"));
-		System.out.println(Arrays.toString(getField("birthday <= ?")));
-		System.out.println(Arrays.toString(getField("uid IN ?")));
+		
 	}
 }

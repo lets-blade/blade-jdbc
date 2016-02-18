@@ -13,8 +13,9 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import blade.kit.logging.Logger;
+import blade.kit.logging.LoggerFactory;
+
 
 public class BasicDataSourceImpl implements DataSource, BasicDataSource {
 	
@@ -200,9 +201,7 @@ public class BasicDataSourceImpl implements DataSource, BasicDataSource {
         }
 
         if (!idleConnections.isEmpty()) {
-            if (log.isDebugEnabled()) {
-                log.debug("Closing " + idleConnections.size() + " idle connections on " + toString());
-            }
+            log.debug("Closing " + idleConnections.size() + " idle connections on " + toString());
             for (ConnectionWrapper connection : idleConnections) {
                 connection.closeUnderlyingConnection();
             }
