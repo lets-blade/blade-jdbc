@@ -104,6 +104,9 @@ public class ARC {
 			int result = query.executeUpdate().getResult();
 			return result;
 		} catch (Exception e) {
+			if(null != connection){
+				connection.rollback();
+			}
 			e.printStackTrace();
 		} finally {
 			close(true);

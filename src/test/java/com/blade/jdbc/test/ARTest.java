@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.sql2o.Connection;
 
 import com.blade.jdbc.AR;
 import com.blade.jdbc.DB;
@@ -51,6 +52,12 @@ public class ARTest {
 	public void testCount(){
 		long c1 = AR.executeSQL("select count(1) from user_t").count();
 		System.out.println(c1);
+	}
+	
+	@Test
+	public void testTx(){
+		Connection conn = AR.executeSQL("update user_t set password3 = ? where id = ?", "haha6", 26).next();
+		AR.executeSQL(conn, "update user_t set password = ? where id = ?", "haha7", 26);
 	}
 	
 }
