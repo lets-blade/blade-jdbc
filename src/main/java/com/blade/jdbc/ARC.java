@@ -6,6 +6,7 @@ import java.util.List;
 import org.sql2o.Connection;
 import org.sql2o.Query;
 
+import blade.kit.EncrypKit;
 import blade.kit.logging.Logger;
 import blade.kit.logging.LoggerFactory;
 
@@ -21,16 +22,20 @@ public class ARC {
 	
 	private int pageIndex, pageSize;
 	
-	public ARC(Connection connection, String sql) {
+	private boolean isCache;
+	
+	public ARC(Connection connection, String sql, boolean cache) {
 		this.connection = connection;
 		this.executeSql = sql;
+		this.isCache = cache;
 	}
 	
-	public ARC(Connection connection, String sql, Object...args) {
+	public ARC(Connection connection, String sql, boolean cache, Object...args) {
 		this.connection = connection;
 		this.args = args;
 		this.customSql = sql;
 		this.executeSql = sql;
+		this.isCache = cache;
 		for(int i=1, len = args.length; i<=len; i++){
 			this.executeSql = this.executeSql.replaceFirst("\\?", ":p" + i); 
 		}
@@ -47,10 +52,8 @@ public class ARC {
 			if(isPage){
 				this.pageSize = (Integer) args[args.length - 1];
 				this.pageIndex = (Integer) args[args.length - 2];
-				
 				int start = (this.pageIndex - 1) * this.pageSize;
 				args[args.length - 2] = start;
-				
 			}
 			query.withParams(args);
 			LOGGER.debug("==>  Parameters: {}", Arrays.toString(args));
@@ -58,8 +61,7 @@ public class ARC {
 		return query;
 	}
 	
-	private Query buildCountQuery(String sql){
-		String countSql = this.getCountSql(sql);
+	private Query buildCountQuery(String countSql){
 		Query query = connection.createQuery(countSql);
 		LOGGER.debug("==>  Preparing: {}", countSql);
 		if(null != args && args.length > 2){
@@ -69,6 +71,20 @@ public class ARC {
 			LOGGER.debug("==>  Parameters: {}", Arrays.toString(ar));
 		}
 		return query;
+	}
+	
+	private <T> String getCacheKey(String sql, Class<T> type){
+		if(null != args && args.length > 0){
+			sql += Arrays.toString(args);
+		}
+		String tableName = "";
+		if(null == type){
+			tableName = ARKit.getTable(sql);
+		} else {
+			tableName = ARKit.tableName(type);
+		}
+		sql = sql.replaceAll("\\s+", "");
+		return tableName + "#" + EncrypKit.md5(sql);
 	}
 	
 	private <T> void autoAdd(OptType optType, Class<T> type){
@@ -91,15 +107,31 @@ public class ARC {
 	
 	public <T> List<T> list(Class<T> type, boolean isPage) {
 		autoAdd(OptType.QUERY, type);
-		Query query = buildQuery(this.executeSql, isPage);
 		List<T> result = null;
+		int total = 0;
 		try {
-			result = query.executeAndFetch(type);
-			int total = 0;
-			if(null != result){
-				total = result.size();
+			if(isCache){
+				String searchKey = this.getCacheKey(this.executeSql, type);
+				List<T> list_cache = DB.cache.get(searchKey);
+				if(null != list_cache){
+					result = list_cache;
+				} else {
+					Query query = buildQuery(this.executeSql, isPage);
+					result = query.executeAndFetch(type);
+					DB.cache.set(searchKey, result);
+					if(null != result){
+						total = result.size();
+					}
+					LOGGER.debug("<==  Total: {}", total);
+				}
+			} else {
+				Query query = buildQuery(this.executeSql, isPage);
+				result = query.executeAndFetch(type);
+				if(null != result){
+					total = result.size();
+				}
+				LOGGER.debug("<==  Total: {}", total);
 			}
-			LOGGER.debug("<==  Total: {}", total);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -110,12 +142,29 @@ public class ARC {
 	
 	public <T> Page<T> page(Class<T> type) {
 		autoAdd(OptType.QUERY, type);
-		Query queryCount = buildCountQuery(this.executeSql);
-		long rows = queryCount.executeAndFetchFirst(Long.class);
-		LOGGER.debug("<==  Total: {}", rows);
+		Long rows = 0L;
+		String countSql = this.getCountSql(this.executeSql);
+		if(isCache){
+			this.pageSize = (Integer) args[args.length - 1];
+			this.pageIndex = (Integer) args[args.length - 2];
+			String countKey = this.getCacheKey(countSql, type);
+			Long rows_cache = DB.cache.get(countKey);
+			if(null != rows_cache){
+				rows = rows_cache;
+			} else {
+				Query queryCount = buildCountQuery(countSql);
+				rows = queryCount.executeAndFetchFirst(Long.class);
+				DB.cache.set(countKey, rows);
+				LOGGER.debug("<==  Total: {}", rows);
+			}
+		} else {
+			Query queryCount = buildCountQuery(countSql);
+			rows = queryCount.executeAndFetchFirst(Long.class);
+			LOGGER.debug("<==  Total: {}", rows);
+		}
 		
-		Page<T> pageResult = new Page<T>(rows, pageIndex, pageSize);
 		List<T> result = this.list(type, true);
+		Page<T> pageResult = new Page<T>(rows, pageIndex, pageSize);
 		try {
 			pageResult.setResults(result);
 		} catch (Exception e) {
@@ -124,6 +173,65 @@ public class ARC {
 			close(false);
 		}
 		return pageResult;
+	}
+	
+	public <T> T first(Class<T> type) {
+		autoAdd(OptType.QUERY, type);
+		T result = null;
+		int total = 0;
+		try {
+			if(isCache){
+				String searchKey = this.getCacheKey(this.executeSql, type);
+				T result_cache = DB.cache.get(searchKey);
+				if(null != result_cache){
+					result = result_cache;
+				} else {
+					Query query = this.buildQuery(this.executeSql);
+					result = query.executeAndFetchFirst(type);
+					DB.cache.set(searchKey, result);
+					LOGGER.debug("<==  Total: {}", total);
+				}
+			} else {
+				Query query = this.buildQuery(this.executeSql);
+				result = query.executeAndFetchFirst(type);
+				LOGGER.debug("<==  Total: {}", total);
+			}
+			if(null != result){
+				total = 1;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			close(false);
+		}
+		return result;
+	}
+	
+	public long count() {
+		Long result = 0L;
+		try {
+			if(isCache){
+				String countKey = this.getCacheKey(this.executeSql, null);
+				Long result_cache = DB.cache.get(countKey);
+				if(null != result_cache){
+					result = result_cache;
+				} else {
+					Query query = this.buildQuery(this.executeSql);
+					result = query.executeAndFetchFirst(Long.class);
+					DB.cache.set(countKey, result);
+					LOGGER.debug("<==  Total: {}", result);
+				}
+			} else {
+				Query query = this.buildQuery(this.executeSql);
+				result = query.executeAndFetchFirst(Long.class);
+				LOGGER.debug("<==  Total: {}", result);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			close(false);
+		}
+		return result;
 	}
 	
 	private String getCountSql(String sql){
@@ -139,48 +247,25 @@ public class ARC {
 		return sql;
 	}
 	
-	public <T> T first(Class<T> type) {
-		autoAdd(OptType.QUERY, type);
-		Query query = this.buildQuery(this.executeSql);
-		T result = null;
-		try {
-			result = query.executeAndFetchFirst(type);
-			int total = 0;
-			if(null != result){
-				total = 1;
-			}
-			LOGGER.debug("<==  Total: {}", total);
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			close(false);
-		}
-		return result;
-	}
-	
-	public long count() {
-		Query query = this.buildQuery(this.executeSql);
-		long result = 0;
-		try {
-			result = query.executeAndFetchFirst(Long.class);
-			LOGGER.debug("<==  Total: {}", result);
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			close(false);
-		}
-		return result;
+	public ARC cache(boolean isCache){
+		this.isCache = isCache;
+		return this;
 	}
 	
 	public Connection next() {
 		Query query = this.buildQuery(this.executeSql);
-		return query.executeUpdate();
+		Connection connection = query.executeUpdate();
+		return connection;
 	}
 	
 	public int commit() {
 		try {
-			Query query = this.buildQuery(this.executeSql);
-			int result = query.executeUpdate().getResult();
+			int result = this.next().getResult();
+			if(isCache){
+				// refresh the cache
+				String table = ARKit.getTable(this.executeSql);
+				DB.cache.clean(table);
+			}
 			return result;
 		} catch (Exception e) {
 			if(null != connection){

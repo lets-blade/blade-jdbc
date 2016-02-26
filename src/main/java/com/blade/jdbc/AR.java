@@ -9,25 +9,27 @@ public final class AR {
 	private AR() {
 	}
 	
+	private static boolean isCache = (null != DB.cache);
+	
 	public static ARC executeSQL(String sql) {
 		Connection connection = DB.sql2o.beginTransaction();
-		ARC brc = new ARC(connection, sql);
+		ARC brc = new ARC(connection, sql.toLowerCase(), isCache);
 		return brc;
 	}
 	
 	public static ARC executeSQL(String sql, Object...args) {
 		Connection connection = DB.sql2o.beginTransaction();
-		ARC brc = new ARC(connection, sql, args);
+		ARC brc = new ARC(connection, sql.toLowerCase(), isCache, args);
 		return brc;
 	}
 	
 	public static ARC executeSQL(Connection connection, String sql) {
-		ARC brc = new ARC(connection, sql);
+		ARC brc = new ARC(connection, sql.toLowerCase(), isCache);
 		return brc;
 	}
 	
 	public static ARC executeSQL(Connection connection, String sql, Object...args) {
-		ARC brc = new ARC(connection, sql, args);
+		ARC brc = new ARC(connection, sql.toLowerCase(), isCache, args);
 		return brc;
 	}
 	

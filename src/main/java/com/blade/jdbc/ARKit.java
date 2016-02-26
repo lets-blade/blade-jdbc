@@ -17,6 +17,15 @@ public class ARKit {
         return cs.toString().indexOf(searchChar.toString(), start);
     }
 	
+	public static String getTable(String sql){
+		Pattern pattern = Pattern.compile("from (\\S+) \\S+");
+		Matcher matcher = pattern.matcher(sql);
+		if(matcher.find()){
+			return matcher.group(1);
+		}
+		return null;
+	}
+	
 	public static int countMatches(final CharSequence str, final CharSequence sub) {
         if (null == str || null == sub) {
             return 0;
@@ -107,6 +116,6 @@ public class ARKit {
     }
 	
 	public static void main(String[] args) {
-		
+		System.out.println(getTable("select count(1) from u_ua where b = 2"));
 	}
 }

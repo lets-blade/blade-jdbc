@@ -4,11 +4,18 @@ import javax.sql.DataSource;
 
 import org.sql2o.Sql2o;
 
+import com.blade.jdbc.cache.Cache;
 import com.blade.jdbc.ds.BasicDataSourceImpl;
 
 public class DB {
 	
-	public static Sql2o sql2o;
+	static Sql2o sql2o;
+	
+	static Cache cache;
+	
+	public static void setCache(Cache cache) {
+		DB.cache = cache;
+	}
 	
 	public static void open(DataSource dataSource) {
 		try {
