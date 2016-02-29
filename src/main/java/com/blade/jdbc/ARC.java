@@ -52,8 +52,12 @@ public class ARC {
 			if(isPage){
 				this.pageSize = (Integer) args[args.length - 1];
 				this.pageIndex = (Integer) args[args.length - 2];
-				int start = (this.pageIndex - 1) * this.pageSize;
-				args[args.length - 2] = start;
+				if(this.pageIndex < 1){
+					args[args.length - 2] = 0;
+				} else {
+					int start = (this.pageIndex - 1) * this.pageSize;
+					args[args.length - 2] = start;
+				}
 			}
 			query.withParams(args);
 			LOGGER.debug("==>  Parameters: {}", Arrays.toString(args));
@@ -64,7 +68,7 @@ public class ARC {
 	private Query buildCountQuery(String countSql){
 		Query query = connection.createQuery(countSql);
 		LOGGER.debug("==>  Preparing: {}", countSql);
-		if(null != args && args.length > 2){
+		if(null != args && args.length > 2 && this.executeSql.indexOf("where") != -1){
 			Object[] ar = new Object[args.length - 2];
 			System.arraycopy(args, 0, ar, ar.length, ar.length);
 			query.withParams(ar);
