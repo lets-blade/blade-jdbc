@@ -41,6 +41,10 @@ public final class AR {
 		return executeSQL(DB.sql2o.open(), sql, args);
 	}
 	
+	public static ARC find(QueryParam whereParam) {
+		return executeSQL(DB.sql2o.open(), whereParam.asSql(), whereParam.args());
+	}
+	
 	public static Object[] in(Object... args) {
 		return args;
 	}
