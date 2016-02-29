@@ -101,7 +101,7 @@ public class QueryParam {
 	public QueryParam in(String name, Object... values){
 		Assert.notEmpty(name);
 		Assert.notEmpty(values);
-		sqlB.append("and ").append(name).append(" in ? ");
+		sqlB.append("and ").append(name).append(" in ( ? ) ");
 		argList.add(values);
 		return this;
 	}
@@ -109,7 +109,7 @@ public class QueryParam {
 	public QueryParam notIn(String name, Object... values){
 		Assert.notEmpty(name);
 		Assert.notEmpty(values);
-		sqlB.append("and ").append(name).append(" not in ? ");
+		sqlB.append("and ").append(name).append(" not in ( ? ) ");
 		argList.add(values);
 		return this;
 	}
