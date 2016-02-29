@@ -8,4 +8,6 @@ public interface Cache {
 	
 	void clean(String table);
 	
+	void cleanAll();
+	
 }

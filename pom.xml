@@ -11,7 +11,7 @@
 
 	<artifactId>blade-jdbc</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>blade-jdbc</name>
 	<url>https://github.com/biezhi/blade/tree/master/blade-jdbc</url>
 
@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>com.bladejava</groupId>
 			<artifactId>blade-kit</artifactId>
-			<version>1.2.9-alpha</version>
+			<version>1.2.9-beta</version>
 		</dependency>
 		<dependency>
 			<groupId>org.sql2o</groupId>

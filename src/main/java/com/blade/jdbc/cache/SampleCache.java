@@ -54,4 +54,10 @@ public class SampleCache implements Cache {
 		}
 	}
 
+	@Override
+	public void cleanAll() {
+		tableKeys.clear();
+		pool.clear();
+	}
+	
 }
