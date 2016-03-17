@@ -119,7 +119,7 @@ public class DiskCache implements Cache {
 				}
 			}
 			if (removeFile)
-				remove(key);
+				del(key);
 		}
 	}
 
@@ -203,7 +203,7 @@ public class DiskCache implements Cache {
 				}
 			}
 			if (removeFile)
-				remove(key);
+				del(key);
 		}
 	}
 
@@ -315,7 +315,8 @@ public class DiskCache implements Cache {
 	 * @param key
 	 * @return 是否移除成功
 	 */
-	public boolean remove(String key) {
+	@Override
+	public boolean del(String key) {
 		return mCache.remove(key);
 	}
 
@@ -607,6 +608,18 @@ public class DiskCache implements Cache {
 	public <V> V hget(String key, String field) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public boolean hdel(String key, String field) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean hdel(String key) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 }

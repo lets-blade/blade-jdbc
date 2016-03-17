@@ -23,6 +23,11 @@ public class ARKit {
 		if(matcher.find()){
 			return matcher.group(1);
 		}
+		pattern = Pattern.compile("update (\\S+) \\S+");
+		matcher = pattern.matcher(sql);
+		if(matcher.find()){
+			return matcher.group(1);
+		}
 		return null;
 	}
 	

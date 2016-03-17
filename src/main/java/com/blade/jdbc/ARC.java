@@ -183,26 +183,6 @@ public class ARC {
 	
 	public <T extends Serializable> Page<T> page(Class<T> type) {
 		autoAdd(OptType.QUERY, type);
-		/*Long rows = 0L;
-		String countSql = this.getCountSql(this.executeSql);
-		if(isCache){
-			this.pageSize = (Integer) args[args.length - 1];
-			this.pageIndex = (Integer) args[args.length - 2];
-			
-			String countKey = this.getCacheKey(countSql, type);
-			
-			Long rows_cache = DB.cache.get(countKey);
-			if(null != rows_cache){
-				rows = rows_cache;
-			} else {
-				Query queryCount = buildCountQuery(countSql);
-				rows = queryCount.executeAndFetchFirst(Long.class);
-				DB.cache.set(countKey, rows);
-			}
-		} else {
-			Query queryCount = buildCountQuery(countSql);
-			rows = queryCount.executeAndFetchFirst(Long.class);
-		}*/
 		
 		long rows = this.count(this.executeSql);
 		
@@ -317,20 +297,40 @@ public class ARC {
 		return this;
 	}
 	
+	public Connection executeUpdate() {
+		try {
+			Query query = this.buildQuery(this.executeSql);
+			Connection connection = query.executeUpdate();
+			
+			if(isCache){
+				
+				String table = ARKit.getTable(this.executeSql);
+				if(this.executeSql.indexOf("insert") != -1){
+					DB.cache.hdel(table + "_list");
+					DB.cache.hdel(table + "_count");
+				} else if(this.executeSql.indexOf("update") != -1){
+					DB.cache.hdel(table + "_list");
+					DB.cache.hdel(table + "_detail");
+				} else if(this.executeSql.indexOf("delete") != -1){
+					DB.cache.hdel(table + "_list");
+					DB.cache.hdel(table + "_detail");
+					DB.cache.hdel(table + "_count");
+				}
+			}
+			return connection;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public Connection next() {
-		Query query = this.buildQuery(this.executeSql);
-		Connection connection = query.executeUpdate();
-		return connection;
+		return this.executeUpdate();
 	}
 	
 	public int commit() {
 		try {
-			int result = this.next().getResult();
-			if(isCache){
-				// refresh the cache
-				String table = ARKit.getTable(this.executeSql);
-//				DB.cache.clean(table);
-			}
+			int result = this.executeUpdate().getResult();
 			return result;
 		} catch (Exception e) {
 			if(null != connection){

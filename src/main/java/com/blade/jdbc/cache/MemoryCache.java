@@ -278,40 +278,48 @@ public abstract class MemoryCache implements Cache {
 	/**
 	 * 移除一个缓存
 	 */
-	public void del(String key) {
+	public boolean del(String key) {
 		writeLock.lock();
         try {
             _mCache.remove(key);
         } finally {
             writeLock.unlock();
         }
+        return true;
 	}
 	
 	/**
 	 * 移除一个缓存
 	 */
-	public void hdel(String key) {
+	public boolean hdel(String key) {
 		writeLock.lock();
         try {
         	_hCache.remove(key);
         } finally {
             writeLock.unlock();
         }
+        return true;
+	}
+	
+	@Override
+	public boolean hdel(String key, String field) {
+		return this.hdel_(key, field);
 	}
 	
 	/**
 	 * 移除一个缓存
 	 */
-	public <F> void del(String key, F feild) {
+	public <F> boolean hdel_(String key, F field) {
 		writeLock.lock();
         try {
         	Map<?, CacheObject<String, Object>> coMap = _hCache.get(key);
         	if(null != coMap){
-        		coMap.remove(feild);
+        		coMap.remove(field);
         	}
         } finally {
             writeLock.unlock();
         }
+        return true;
 	}
 	
 	public Set<String> keys() {

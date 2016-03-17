@@ -32,17 +32,10 @@ public interface Cache {
 	
 	<V> V hget(String key, String field);
 	
-	/*<V> void hset(String key, String field, V value);
-	
-	<V> void hset(String key, String field, V value, int saveTime);
-	
-	<V> V get(String key);
-	
-	<V> V hget(String key, String field);
-	
 	boolean del(String key);
 	
-	boolean hdel(String key, String field);*/
+	boolean hdel(String key);
 	
+	boolean hdel(String key, String field);
 	
 }
