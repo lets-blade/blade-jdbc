@@ -1,10 +1,13 @@
 package com.blade.jdbc.test;
 
+import java.io.Serializable;
+
 import com.blade.jdbc.annotation.Table;
 
 @Table("user_t")
-public class User {
+public class User implements Serializable{
 
+	private static final long serialVersionUID = 7982003725694468659L;
 	private Integer id;
 	private String user_name;
 	private String password;

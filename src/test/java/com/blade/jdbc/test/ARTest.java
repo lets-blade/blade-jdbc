@@ -8,6 +8,7 @@ import org.sql2o.Connection;
 
 import com.blade.jdbc.AR;
 import com.blade.jdbc.DB;
+import com.blade.jdbc.cache.memory.FIFOCache;
 
 public class ARTest {
 
@@ -60,4 +61,23 @@ public class ARTest {
 		AR.executeSQL(conn, "update user_t set password = ? where id = ?", "haha7", 26);
 	}
 	
+	@Test
+	public void testCache(){
+		
+		DB.setCache(new FIFOCache());
+		
+		/*User user = AR.findById(User.class, 18);
+		
+		System.out.println("user = " + user);
+		
+		User u2 = AR.findById(User.class, 18);
+		System.out.println(u2);*/
+		
+		List<User> users = AR.find("select * from user_t where age > ?", 10).list(User.class);
+		System.out.println(users);
+		
+		List<User> users2 = AR.find("select * from user_t where age > ?", 10).list(User.class);
+		System.out.println(users2);
+		
+	}
 }

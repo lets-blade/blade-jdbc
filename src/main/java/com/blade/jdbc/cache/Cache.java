@@ -1,13 +1,48 @@
 package com.blade.jdbc.cache;
 
+import java.io.Serializable;
+
 public interface Cache {
 
-	<T> T get(String key);
+	void set(String key, String value);
 	
-	<T> void set(String key, T value);
+	void set(String key, byte[] value);
 	
-	void clean(String table);
+	void set(String key, Serializable value);
 	
-	void cleanAll();
+	void set(String key, String value, long expire);
+	
+	void set(String key, byte[] value, long expire);
+	
+	void set(String key, Serializable value, long expire);
+	
+	void hset(String key, String field, Serializable value);
+	
+	void hset(String key, String field, Serializable value, long expire);
+	
+	void hset(String key, String field, Object value);
+	
+	void hset(String key, String field, Object value, long expire);
+	
+	String getString(String key);
+	
+	byte[] getBytes(String key);
+	
+	<T extends Serializable> T getObject(String key);
+	
+	<V> V hget(String key, String field);
+	
+	/*<V> void hset(String key, String field, V value);
+	
+	<V> void hset(String key, String field, V value, int saveTime);
+	
+	<V> V get(String key);
+	
+	<V> V hget(String key, String field);
+	
+	boolean del(String key);
+	
+	boolean hdel(String key, String field);*/
+	
 	
 }

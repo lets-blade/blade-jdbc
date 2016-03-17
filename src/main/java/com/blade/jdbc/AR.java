@@ -41,15 +41,15 @@ public final class AR {
 		return executeSQL(DB.sql2o.open(), sql, args);
 	}
 	
-	public static ARC find(QueryParam whereParam) {
-		return executeSQL(DB.sql2o.open(), whereParam.asSql(), whereParam.args());
+	public static ARC find(QueryParam queryParam) {
+		return executeSQL(DB.sql2o.open(), queryParam.asSql(), queryParam.args());
 	}
 	
 	public static Object[] in(Object... args) {
 		return args;
 	}
 	
-	public static <T> T findById(Class<T> type, Serializable pk) {
+	public static <T extends Serializable> T findById(Class<T> type, Serializable pk) {
 		String sql = "select * from " + ARKit.tableName(type) + " where " + ARKit.pkName(type) +" = ?";
 		return find(sql, pk).first(type);
 	}
