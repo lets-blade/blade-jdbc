@@ -1,6 +1,7 @@
 package com.blade.jdbc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import blade.kit.Assert;
@@ -131,17 +132,14 @@ public class QueryParam {
 		Assert.notEmpty(sql);
 		Assert.notEmpty(args);
 		sqlB.append(sql);
-		for(Object arg : args){
-			argList.add(arg);
-		}
+		argList.addAll(Arrays.asList(args));
 		return this;
 	}
 	
-	public QueryParam page(int page, int count){
+	public void page(int page, int count){
 		sqlB.append("limit ?,? ");
 		argList.add(page);
 		argList.add(count);
-		return this;
 	}
 	
 	public String asSql(){

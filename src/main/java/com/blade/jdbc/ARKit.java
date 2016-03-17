@@ -3,7 +3,9 @@ package com.blade.jdbc;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,20 +15,39 @@ import blade.kit.Assert;
 
 public class ARKit {
 
+	static final Set<String> WHEREPOS = new HashSet<String>(9);
+	
+	static{
+		WHEREPOS.add(">");
+		WHEREPOS.add(">=");
+		WHEREPOS.add("<");
+		WHEREPOS.add("<=");
+		WHEREPOS.add("=");
+		WHEREPOS.add("<>");
+		WHEREPOS.add("in");
+		WHEREPOS.add("like");
+		WHEREPOS.add("between");
+	}
+	
 	static int indexOf(final CharSequence cs, final CharSequence searchChar, final int start) {
         return cs.toString().indexOf(searchChar.toString(), start);
     }
 	
 	public static String getTable(String sql){
-		Pattern pattern = Pattern.compile("from (\\S+) \\S+");
+		Pattern pattern = Pattern.compile("from(\\s+)(\\w+)(\\s*)");
 		Matcher matcher = pattern.matcher(sql);
 		if(matcher.find()){
-			return matcher.group(1);
+			return matcher.group(2);
 		}
-		pattern = Pattern.compile("update (\\S+) \\S+");
+		pattern = Pattern.compile("update(\\s+)(\\w+)(\\s*)");
 		matcher = pattern.matcher(sql);
 		if(matcher.find()){
-			return matcher.group(1);
+			return matcher.group(2);
+		}
+		pattern = Pattern.compile("insert(\\s+)into(\\s+)(\\w+)(\\s*)");
+		matcher = pattern.matcher(sql);
+		if(matcher.find()){
+			return matcher.group(3);
 		}
 		return null;
 	}
@@ -119,6 +140,19 @@ public class ARKit {
 		}
         return null;
     }
+	
+	public static String cleanCountSql(String sql){
+		String countSql = sql;
+		int pos = sql.indexOf("order by");
+		if(pos != -1){
+			countSql = sql.substring(0, pos);
+		}
+		pos = countSql.indexOf("limit");
+		if(pos != -1){
+			countSql = countSql.substring(0, pos);
+		}
+		return countSql;
+	}
 	
 	public static void main(String[] args) {
 		System.out.println(getTable("select count(1) from u_ua where b = 2"));

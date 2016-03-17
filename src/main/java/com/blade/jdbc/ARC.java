@@ -17,12 +17,12 @@ public class ARC {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ARC.class);
 	
 	private Connection connection;
+	
 	private Object[] args;
+	private Object[] whereArgs;
 	
 	private String customSql;
 	private String executeSql;
-	
-	private int pageIndex, pageSize;
 	
 	private boolean isCache;
 	
@@ -34,33 +34,35 @@ public class ARC {
 	
 	public ARC(Connection connection, String sql, boolean cache, Object...args) {
 		this.connection = connection;
-		this.args = args;
 		this.customSql = sql;
 		this.executeSql = sql;
 		this.isCache = cache;
-		for(int i=1, len = args.length; i<=len; i++){
-			this.executeSql = this.executeSql.replaceFirst("\\?", ":p" + i); 
+		
+		this.args = args;
+		List<Object> whereList = new ArrayList<Object>();
+		for(int i=0, len = args.length; i<len; i++){
+			int pos = this.executeSql.indexOf("?");
+			if(pos == -1){
+				break;
+			}
+			String prefix = this.executeSql.substring(0, pos).trim();
+			
+			// 找到倒数第一个字符
+			int lastSpace = prefix.lastIndexOf(' ');
+			String postion = prefix.substring(lastSpace).trim();
+			
+			if(ARKit.WHEREPOS.contains(postion)){
+				whereList.add(args[i]);
+			}
+			this.executeSql = this.executeSql.replaceFirst("\\?", ":p" + (i+1)); 
 		}
+		this.whereArgs = whereList.toArray();
 	}
 	
 	private Query buildQuery(String sql){
-		return this.buildQuery(sql, false);
-	}
-	
-	private Query buildQuery(String sql, boolean isPage){
 		Query query = connection.createQuery(sql);
 		LOGGER.debug("==>  Preparing: {}", sql);
 		if(null != args && args.length > 0){
-			if(isPage){
-				this.pageSize = (Integer) args[args.length - 1];
-				this.pageIndex = (Integer) args[args.length - 2];
-				if(this.pageIndex < 1){
-					args[args.length - 2] = 0;
-				} else {
-					int start = (this.pageIndex - 1) * this.pageSize;
-					args[args.length - 2] = start;
-				}
-			}
 			query.withParams(args);
 			LOGGER.debug("==>  Parameters: {}", Arrays.toString(args));
 		}
@@ -102,6 +104,14 @@ public class ARC {
 		return EncrypKit.md5(sql);
 	}
 	
+	private <T> String getCountCacheField(String sql){
+		if(null != whereArgs && whereArgs.length > 0){
+			sql += Arrays.toString(whereArgs);
+		}
+		sql = sql.replaceAll("\\s+", "");
+		return EncrypKit.md5(sql);
+	}
+	
 	private <T> void autoAdd(OptType optType, Class<T> type){
 		if(optType == OptType.QUERY){
 			// 没有select * from xxx
@@ -125,7 +135,9 @@ public class ARC {
 		List<T> result = null;
 		int total = 0;
 		try {
+			
 			if(isCache){
+				
 				String cacheKey = this.getCacheKey(this.executeSql, type) + "_list";
 				String cacheField = this.getCacheField(this.executeSql);
 				
@@ -145,7 +157,7 @@ public class ARC {
 					
 					String pkName = ARKit.pkName(type);
 					String fidSql = this.executeSql.replaceFirst("\\*", pkName);
-					Query query = buildQuery(fidSql, isPage);
+					Query query = this.buildQuery(fidSql);
 					
 					List<Long> ids = query.executeScalarList(Long.class);
 					if(null != ids){
@@ -165,7 +177,7 @@ public class ARC {
 					}
 				}
 			} else {
-				Query query = buildQuery(this.executeSql, isPage);
+				Query query = this.buildQuery(this.executeSql);
 				result = query.executeAndFetch(type);
 				if(null != result){
 					total = result.size();
@@ -182,14 +194,23 @@ public class ARC {
 	}
 	
 	public <T extends Serializable> Page<T> page(Class<T> type) {
+		
 		autoAdd(OptType.QUERY, type);
 		
 		long rows = this.count(this.executeSql);
 		
-		LOGGER.debug("<==  Total: {}", rows);
+		int page = 1, pageIndex = 0, pageSize = 0;
+		if(null != args && args.length > 1){
+			pageSize = (Integer) args[args.length - 1];
+			page = (Integer) args[args.length - 2];
+			
+			pageIndex = (page - 1) * pageSize;
+			args[args.length - 2] = pageIndex;
+		}
 		
 		List<T> result = this.list(type, true);
-		Page<T> pageResult = new Page<T>(rows, pageIndex, pageSize);
+		
+		Page<T> pageResult = new Page<T>(rows, page, pageSize);
 		try {
 			pageResult.setResults(result);
 		} catch (Exception e) {
@@ -245,12 +266,16 @@ public class ARC {
 	}
 	
 	public long count(String sql) {
+		
 		Long result = 0L;
+		
 		try {
+			
 			if(isCache){
 				
-				String cacheKey = this.getCacheKey(sql, null) + "_count";
-				String cacheField = this.getCacheField(sql);
+				String countSql = ARKit.cleanCountSql(sql);
+				String cacheKey = this.getCacheKey(countSql, null) + "_count";
+				String cacheField = this.getCountCacheField(countSql);
 				
 				Long result_cache = DB.cache.hget(cacheKey, cacheField);
 				
@@ -258,7 +283,7 @@ public class ARC {
 					result = result_cache;
 				} else {
 					
-					Query query = this.buildCountQuery(sql);
+					Query query = this.buildCountQuery(countSql);
 					
 					result = query.executeAndFetchFirst(Long.class);
 					if(null != result){
