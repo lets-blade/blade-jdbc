@@ -582,44 +582,39 @@ public class DiskCache implements Cache {
 
 	@Override
 	public void hset(String key, String field, Serializable value) {
-		// TODO Auto-generated method stub
-		
+		hset(key, field, value, 0);
 	}
 
 	@Override
 	public void hset(String key, String field, Serializable value, long expire) {
-		// TODO Auto-generated method stub
-		
+		String nkey = key + "#" + field;
+		set(nkey, value, expire);
 	}
 
 	@Override
 	public void hset(String key, String field, Object value) {
-		// TODO Auto-generated method stub
-		
+		hset(key, field, value, 0);
 	}
 
 	@Override
 	public void hset(String key, String field, Object value, long expire) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public <V> V hget(String key, String field) {
-		// TODO Auto-generated method stub
-		return null;
+		String nkey = key + "#" + field;
+		return this.getObject(nkey);
 	}
 
 	@Override
 	public boolean hdel(String key, String field) {
-		// TODO Auto-generated method stub
-		return false;
+		String nkey = key + "#" + field;
+		return this.del(nkey);
 	}
 
 	@Override
 	public boolean hdel(String key) {
-		// TODO Auto-generated method stub
-		return false;
+		return this.del(key);
 	}
 	
 }

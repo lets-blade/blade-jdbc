@@ -35,16 +35,16 @@ public class ARTest {
 	@Test
 	public void testUpdate(){
 		
-		int c1 = AR.executeSQL("update user_t set password = 'haha' where id = 26").commit();
+		int c1 = AR.executeSQL("update user_t set password = 'haha' where id = 26").executeUpdate();
 		System.out.println(c1);
 		
-		int c2 = AR.executeSQL("update user_t set password = ? where id = ?", "haha2", 26).commit();
+		int c2 = AR.executeSQL("update user_t set password = ? where id = ?", "haha2", 26).executeUpdate();
 		System.out.println(c2);
 		
-		int c3 = AR.update("update user_t set password = 'haha3' where id = 26").commit();
+		int c3 = AR.update("update user_t set password = 'haha3' where id = 26").executeUpdate();
 		System.out.println(c3);
 		
-		int c4 = AR.update("update user_t set password = ? where id = ?", "haha4", 26).commit();
+		int c4 = AR.update("update user_t set password = ? where id = ?", "haha4", 26).executeUpdate();
 		System.out.println(c4);
 		
 	}

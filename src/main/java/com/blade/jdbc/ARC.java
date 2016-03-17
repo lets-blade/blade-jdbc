@@ -297,50 +297,54 @@ public class ARC {
 		return this;
 	}
 	
-	public Connection executeUpdate() {
+	public int executeUpdate() {
+		Connection connection = this.next();
+		if(null != connection){
+			connection.commit();
+			return connection.getResult();
+		}
+		return 0;
+	}
+	
+	public Connection next() {
 		try {
 			Query query = this.buildQuery(this.executeSql);
 			Connection connection = query.executeUpdate();
+			int result = connection.getResult();
 			
-			if(isCache){
+			if(isCache && result > 0){
 				
 				String table = ARKit.getTable(this.executeSql);
 				if(this.executeSql.indexOf("insert") != -1){
 					DB.cache.hdel(table + "_list");
 					DB.cache.hdel(table + "_count");
+					
+					LOGGER.debug("update cache:{}", table);
+					
 				} else if(this.executeSql.indexOf("update") != -1){
 					DB.cache.hdel(table + "_list");
 					DB.cache.hdel(table + "_detail");
+					
+					LOGGER.debug("update cache:{}", table);
 				} else if(this.executeSql.indexOf("delete") != -1){
 					DB.cache.hdel(table + "_list");
 					DB.cache.hdel(table + "_detail");
 					DB.cache.hdel(table + "_count");
+					
+					LOGGER.debug("update cache:{}", table);
 				}
 			}
+			
+			LOGGER.debug("<==  Total: {}", result);
+			
 			return connection;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	public Connection next() {
-		return this.executeUpdate();
-	}
-	
-	public int commit() {
-		try {
-			int result = this.executeUpdate().getResult();
-			return result;
 		} catch (Exception e) {
 			if(null != connection){
 				connection.rollback();
 			}
 			e.printStackTrace();
-		} finally {
-			close(true);
 		}
-		return 0;
+		return connection;
 	}
 	
 	public Object key() {
