@@ -42,5 +42,40 @@ int c4 = AR.update("update user_t set password = ? where id = ?", "haha4", 26).e
 DB.setCache(new FIFOCache());
 ```
 
+数据库实体类的约束条件：
+
+- 实现 `java.io.Serializable` 接口
+- 使用 `@Table` 注解标识数据库表名，PK代表主键(不填写默认为id)
+
+
+```java
+@Table(value = "user_t", PK = "id")
+public class User implements Serializable{
+	
+	private Integer id;
+	private String user_name;
+
+	public User() {
+		
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getUser_name() {
+		return user_name;
+	}
+
+	public void setUser_name(String user_name) {
+		this.user_name = user_name;
+	}
+}
+```
+
 [测试代码](https://github.com/bladejava/blade-jdbc/tree/master/src/test/java/com/blade/jdbc/test)
 

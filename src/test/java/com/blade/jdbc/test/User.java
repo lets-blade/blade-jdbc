@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import com.blade.jdbc.annotation.Table;
 
-@Table("user_t")
+@Table(value = "user_t", PK = "id")
 public class User implements Serializable{
 
 	private static final long serialVersionUID = 7982003725694468659L;
