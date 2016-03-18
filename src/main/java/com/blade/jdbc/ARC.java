@@ -28,6 +28,7 @@ public class ARC {
 	
 	public ARC(Connection connection, String sql, boolean cache) {
 		this.connection = connection;
+		this.customSql = sql;
 		this.executeSql = sql;
 		this.isCache = cache;
 	}
@@ -39,6 +40,7 @@ public class ARC {
 		this.isCache = cache;
 		
 		this.args = args;
+		
 		List<Object> whereList = new ArrayList<Object>();
 		for(int i=0, len = args.length; i<len; i++){
 			int pos = this.executeSql.indexOf("?");
@@ -159,7 +161,7 @@ public class ARC {
 					String fidSql = this.executeSql.replaceFirst("\\*", pkName);
 					Query query = this.buildQuery(fidSql);
 					
-					List<Long> ids = query.executeScalarList(Long.class);
+					List<Long> ids = query.executeAndFetch(Long.class);
 					if(null != ids){
 						total = ids.size();
 						LOGGER.debug("<==  Total: {}", total);
@@ -271,9 +273,9 @@ public class ARC {
 		
 		try {
 			
+			String countSql = ARKit.cleanCountSql(sql);
+			
 			if(isCache){
-				
-				String countSql = ARKit.cleanCountSql(sql);
 				String cacheKey = this.getCacheKey(countSql, null) + "_count";
 				String cacheField = this.getCountCacheField(countSql);
 				
@@ -292,7 +294,7 @@ public class ARC {
 					LOGGER.debug("<==  Total: {}", result);
 				}
 			} else {
-				Query query = this.buildQuery(this.executeSql);
+				Query query = this.buildCountQuery(countSql);
 				result = query.executeAndFetchFirst(Long.class);
 				LOGGER.debug("<==  Total: {}", result);
 			}

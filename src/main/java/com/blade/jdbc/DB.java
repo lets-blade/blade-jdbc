@@ -64,5 +64,8 @@ public class DB {
 		}
 	}
 	
+	public static Sql2o sql2o(){
+		return sql2o;
+	}
 	
 }

@@ -117,10 +117,16 @@ public class QueryParam {
 	
 	public QueryParam orderby(String orderby){
 		Assert.notEmpty(orderby);
+		sqlB.append("order by " + orderby + " ");
+		return this;
+	}
+	
+	/*public QueryParam orderby(String orderby){
+		Assert.notEmpty(orderby);
 		sqlB.append("order by ? ");
 		argList.add(orderby);
 		return this;
-	}
+	}*/
 	
 	public QueryParam add(String sql){
 		Assert.notEmpty(sql);
