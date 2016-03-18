@@ -37,7 +37,7 @@
 	</dependencies>
 	
 	<build>
-		<finalName>java-china</finalName>
+		<finalName>blade-java</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
