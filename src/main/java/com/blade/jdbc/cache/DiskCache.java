@@ -600,10 +600,15 @@ public class DiskCache implements Cache {
 	public void hset(String key, String field, Object value, long expire) {
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <V> V hget(String key, String field) {
 		String nkey = key + "#" + field;
-		return this.getObject(nkey);
+		Object object = this.getObject(nkey);
+		if(null != object){
+			return (V) object;
+		}
+		return null;
 	}
 
 	@Override
