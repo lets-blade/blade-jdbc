@@ -277,8 +277,7 @@ public class BasicDataSourceImpl implements DataSource, BasicDataSource {
     public long getLockTimeout() {
         return lockTimeout;
     }
-
-	@Override
+    
 	public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		return null;
 	}
