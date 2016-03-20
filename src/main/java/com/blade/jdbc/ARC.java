@@ -21,21 +21,18 @@ public class ARC {
 	private Object[] args;
 	private Object[] whereArgs;
 	
-	private String customSql;
 	private String executeSql;
 	
 	private boolean isCache;
 	
 	public ARC(Connection connection, String sql, boolean cache) {
 		this.connection = connection;
-		this.customSql = sql;
 		this.executeSql = sql;
 		this.isCache = cache;
 	}
 	
 	public ARC(Connection connection, String sql, boolean cache, Object...args) {
 		this.connection = connection;
-		this.customSql = sql;
 		this.executeSql = sql;
 		this.isCache = cache;
 		
@@ -75,9 +72,9 @@ public class ARC {
 		String countSql = this.getCountSql(sql);
 		Query query = connection.createQuery(countSql);
 		LOGGER.debug("==>  Preparing: {}", countSql);
-		if(null != args && args.length > 2 && this.executeSql.indexOf("where") != -1){
+		if(null != args && args.length > 2 && sql.indexOf("where") != -1){
 			int len = args.length - 2;
-			if(this.executeSql.indexOf("order by") != -1){
+			if(sql.indexOf("order by") != -1){
 				len -= 1;
 			}
 			Object[] ar = new Object[len];
@@ -114,17 +111,11 @@ public class ARC {
 		return EncrypKit.md5(sql);
 	}
 	
-	private <T> void autoAdd(OptType optType, Class<T> type){
-		if(optType == OptType.QUERY){
-			// 没有select * from xxx
-			if(this.customSql.indexOf("select") == -1){
-				String prfix = "select * from " + ARKit.tableName(type) + " ";
-				this.customSql = prfix + this.customSql;
-			}
-			if(this.executeSql.indexOf("select") == -1){
-				String prfix = "select * from " + ARKit.tableName(type) + " ";
-				this.executeSql = prfix + this.executeSql;
-			}
+	private <T> void autoAdd(Class<T> type){
+		// 没有select * from xxx
+		if(this.executeSql.indexOf("select") == -1){
+			String prfix = "select * from " + ARKit.tableName(type) + " ";
+			this.executeSql = prfix + this.executeSql;
 		}
 	}
 	
@@ -133,7 +124,8 @@ public class ARC {
 	}
 	
 	public <T extends Serializable> List<T> list(Class<T> type, boolean isPage) {
-		autoAdd(OptType.QUERY, type);
+		autoAdd(type);
+		
 		List<T> result = null;
 		int total = 0;
 		try {
@@ -197,7 +189,7 @@ public class ARC {
 	
 	public <T extends Serializable> Page<T> page(Class<T> type) {
 		
-		autoAdd(OptType.QUERY, type);
+		autoAdd(type);
 		
 		long rows = this.count(this.executeSql);
 		
@@ -224,7 +216,9 @@ public class ARC {
 	}
 	
 	public <T extends Serializable> T first(Class<T> type) {
-		autoAdd(OptType.QUERY, type);
+		
+		autoAdd(type);
+		
 		T result = null;
 		int total = 0;
 		try {
