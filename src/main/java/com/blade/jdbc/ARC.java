@@ -87,10 +87,11 @@ public class ARC {
 	
 	private <T> String getCacheKey(String sql, Class<T> type){
 		String tableName = "";
-		if(null == type){
-			tableName = ARKit.getTable(sql);
-		} else {
+		
+		if(null != type && type.getSuperclass().equals(Serializable.class)){
 			tableName = ARKit.tableName(type);
+		} else {
+			tableName = ARKit.getTable(sql);
 		}
 		return tableName;
 	}
