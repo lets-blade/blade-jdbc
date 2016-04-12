@@ -38,4 +38,6 @@ public interface Cache {
 	
 	boolean hdel(String key, String field);
 	
+	void clean();
+	
 }

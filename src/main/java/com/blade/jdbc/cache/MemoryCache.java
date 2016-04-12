@@ -322,6 +322,13 @@ public abstract class MemoryCache implements Cache {
         return true;
 	}
 	
+	
+	@Override
+	public void clean() {
+		this._mCache	= Collections.synchronizedMap(new HashMap<String, CacheObject<String, Object>>());
+		this._hCache	= Collections.synchronizedMap(new HashMap<String, Map<?, CacheObject<String, Object>>>());
+	}
+	
 	public Set<String> keys() {
 		return _mCache.keySet();
 	}

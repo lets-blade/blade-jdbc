@@ -62,4 +62,9 @@ public final class AR {
 		return executeSQL(DB.sql2o.beginTransaction(), sql, args);
 	}
 	
+	public static void cleanCache(){
+		if(null != DB.cache){
+			DB.cache.clean();
+		}
+	}
 }

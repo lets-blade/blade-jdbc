@@ -168,6 +168,11 @@ public class DiskCache implements Cache {
 	public void set(String key, byte[] value, long expire) {
 		set(key, Utils.newByteArrayWithDateInfo(expire, value));
 	}
+	
+	@Override
+	public void clean() {
+		// TODO Auto-generated method stub
+	}
 
 	/**
 	 * 获取 byte 数据
