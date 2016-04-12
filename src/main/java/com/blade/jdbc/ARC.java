@@ -320,7 +320,11 @@ public class ARC {
 	}
 	
 	public int executeUpdate() {
-		Connection connection = this.next();
+		return this.executeUpdate(false);
+	}
+	
+	public int executeUpdate(boolean delCache) {
+		Connection connection = this.next(delCache);
 		if(null != connection){
 			connection.commit();
 			return connection.getResult();
@@ -329,6 +333,10 @@ public class ARC {
 	}
 	
 	public Connection next() {
+		return this.next(false);
+	}
+	
+	public Connection next(boolean delCache) {
 		try {
 			Query query = this.buildQuery(this.executeSql);
 			Connection connection = query.executeUpdate();
@@ -346,7 +354,9 @@ public class ARC {
 				} else if(this.executeSql.indexOf("update") != -1){
 					DB.cache.hdel(table + "_list");
 					DB.cache.hdel(table + "_detail");
-					
+					if(delCache){
+						DB.cache.hdel(table + "_count");
+					}
 					LOGGER.debug("update cache:{}", table);
 				} else if(this.executeSql.indexOf("delete") != -1){
 					DB.cache.hdel(table + "_list");
