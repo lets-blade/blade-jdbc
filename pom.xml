@@ -7,17 +7,11 @@
 	<groupId>com.bladejava</groupId>
 	<artifactId>blade-jdbc</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.8</version>
+	<version>0.0.9</version>
 	<name>blade-jdbc</name>
 	<url>https://github.com/bladejava/blade-jdbc</url>
 
 	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.10</version>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>com.bladejava</groupId>
 			<artifactId>blade-kit</artifactId>

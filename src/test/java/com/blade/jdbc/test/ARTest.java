@@ -2,8 +2,6 @@ package com.blade.jdbc.test;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
 import org.sql2o.Connection;
 
 import com.blade.jdbc.AR;
@@ -11,12 +9,10 @@ import com.blade.jdbc.DB;
 
 public class ARTest {
 
-	@Before
 	public void before(){
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);
 	}
 	
-	@Test
 	public void testQuery(){
 		List<User> users = AR.executeSQL("select * from user_t where age > 20 order by id desc limit 0,3").list(User.class);
 		System.out.println(users);
@@ -31,7 +27,6 @@ public class ARTest {
 		System.out.println(users4);
 	}
 	
-	@Test
 	public void testUpdate(){
 		
 		int c1 = AR.executeSQL("update user_t set password = 'haha' where id = 26").executeUpdate();
@@ -48,7 +43,6 @@ public class ARTest {
 		
 	}
 	
-	@Test
 	public void testCount(){
 		long c1 = AR.executeSQL("select count(1) from user_t").count();
 		System.out.println(c1);
@@ -57,7 +51,6 @@ public class ARTest {
 		System.out.println(c2);
 	}
 	
-	@Test
 	public void testTx(){
 		Connection conn = AR.executeSQL("update user_t set password3 = ? where id = ?", "haha6", 26).next();
 		AR.executeSQL(conn, "update user_t set password = ? where id = ?", "haha7", 26);

@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2016, biezhi 王爵 (biezhi.me@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.blade.jdbc;
 
 import java.io.Serializable;
@@ -12,17 +27,29 @@ import blade.kit.EncrypKit;
 import blade.kit.logging.Logger;
 import blade.kit.logging.LoggerFactory;
 
+/**
+ * ARC 根据sql语句来操作数据库，它具有原子性，每一次sql的执行都会生成一个ARC对象。
+ *
+ * @author	<a href="mailto:biezhi.me@gmail.com" target="_blank">biezhi</a>
+ * @since	1.0
+ */
 public class ARC {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ARC.class);
 	
+	// 当前数据库连接对象
 	private Connection connection;
 	
+	// 你的参数列表
 	private Object[] args;
+	
+	// 你的where条件参数列表
 	private Object[] whereArgs;
 	
+	// 要执行的sql语句
 	private String executeSql;
 	
+	// 本次操作是否开启缓存
 	private boolean isCache;
 	
 	public ARC(Connection connection, String sql, boolean cache) {
@@ -58,6 +85,11 @@ public class ARC {
 		this.whereArgs = whereList.toArray();
 	}
 	
+	/**
+	 * 构建一个查询的Query对象
+	 * @param sql	sql语句
+	 * @return		返回Query对象
+	 */
 	private Query buildQuery(String sql){
 		Query query = connection.createQuery(sql);
 		LOGGER.debug("==>  Preparing: {}", sql);
@@ -68,6 +100,11 @@ public class ARC {
 		return query;
 	}
 	
+	/**
+	 * 构建一个查询记录数的Query对象
+	 * @param sql	sql语句
+	 * @return		返回Query对象
+	 */
 	private Query buildCountQuery(String sql){
 		String countSql = this.getCountSql(sql);
 		Query query = connection.createQuery(countSql);
@@ -85,6 +122,12 @@ public class ARC {
 		return query;
 	}
 	
+	/**
+	 * 获取表名作为缓存key
+	 * @param sql		sql语句
+	 * @param type		数据库对应的实体Class
+	 * @return			返回表名
+	 */
 	private <T> String getCacheKey(String sql, Class<T> type){
 		String tableName = "";
 		
@@ -96,6 +139,11 @@ public class ARC {
 		return tableName;
 	}
 	
+	/**
+	 * 获取缓存字段值，这里使用了MD5加密存储
+	 * @param sql	sql语句
+	 * @return		返回加密后的缓存值
+	 */
 	private <T> String getCacheField(String sql){
 		if(null != args && args.length > 0){
 			sql += Arrays.toString(args);
@@ -104,6 +152,11 @@ public class ARC {
 		return EncrypKit.md5(sql);
 	}
 	
+	/**
+	 * 获取缓存字段值，这里使用了MD5加密存储
+	 * @param sql	sql语句
+	 * @return		返回加密后的缓存值
+	 */
 	private <T> String getCountCacheField(String sql){
 		if(null != whereArgs && whereArgs.length > 0){
 			sql += Arrays.toString(whereArgs);
@@ -112,6 +165,7 @@ public class ARC {
 		return EncrypKit.md5(sql);
 	}
 	
+	// 自动弥补查询语句中没有写 select * from
 	private <T> void autoAdd(Class<T> type){
 		// 没有select * from xxx
 		if(this.executeSql.indexOf("select") == -1){
@@ -348,6 +402,7 @@ public class ARC {
 				if(this.executeSql.indexOf("insert") != -1){
 					DB.cache.hdel(table + "_list");
 					DB.cache.hdel(table + "_count");
+					DB.cache.hdel(table + "_detail");
 					
 					LOGGER.debug("update cache:{}", table);
 					

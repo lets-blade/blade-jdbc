@@ -1,8 +1,5 @@
 package com.blade.jdbc.test;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.blade.jdbc.AR;
 import com.blade.jdbc.DB;
 import com.blade.jdbc.cache.memory.FIFOCache;
@@ -14,13 +11,11 @@ public class CacheTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CacheTest.class);
 	
-	@Before
 	public void before(){
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);
 		DB.setCache(new FIFOCache());
 	}
 	
-	@Test
 	public void testCache(){
 		
 		LOGGER.info("第1次请求, 直接查询 >>>> ");

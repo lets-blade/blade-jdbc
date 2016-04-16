@@ -2,9 +2,6 @@ package com.blade.jdbc.test;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import com.blade.jdbc.DB;
 import com.blade.jdbc.DBJob;
 
@@ -15,12 +12,10 @@ public class CRUDTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CRUDTest.class);
 
-	@Before
 	public void before() {
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);
 	}
 	
-	@Test
 	public void testQuery() {
 		User user = new DBJob<User>() {
 			@Override
@@ -42,7 +37,6 @@ public class CRUDTest {
 		
 	}
 
-	@Test
 	public void testUpdate() {
 		int count = new DBJob<Integer>() {
 			@Override
@@ -56,7 +50,6 @@ public class CRUDTest {
 		LOGGER.info("update count = {}", count);
 	}
 
-	@Test
 	public void testInsert() {
 		Long id =  (Long) new DBJob<Object>() {
 			@Override
@@ -71,7 +64,6 @@ public class CRUDTest {
 		LOGGER.info("insert userid = {}", id);
 	}
 
-	@Test
 	public void testInsertWithModel() {
 		final User user = new User();
 		user.setUser_name("model1");
@@ -90,7 +82,6 @@ public class CRUDTest {
 	}
 	
 	
-	@Test
 	public void testDelete() {
 		
 		int count = new DBJob<Integer>() {
@@ -104,7 +95,6 @@ public class CRUDTest {
 		LOGGER.info("delete count = {}", count);
 	}
 
-	@Test
 	public void testTrans() {
 		boolean flag = new DBJob<Boolean>() {
 			@Override
