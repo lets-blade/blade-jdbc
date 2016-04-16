@@ -1,10 +1,10 @@
-package com.blade.jdbc.test;
+package com.blade.jdbc;
 
 import java.util.Arrays;
 
 import com.blade.jdbc.QueryParam;
 
-public class WhereParamTest {
+public class WhereParamUsage {
 
 	public static void main(String[] args) {
 		QueryParam w = QueryParam.me();

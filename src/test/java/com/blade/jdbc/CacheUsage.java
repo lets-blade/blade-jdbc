@@ -1,4 +1,4 @@
-package com.blade.jdbc.test;
+package com.blade.jdbc;
 
 import com.blade.jdbc.AR;
 import com.blade.jdbc.DB;
@@ -7,9 +7,9 @@ import com.blade.jdbc.cache.memory.FIFOCache;
 import blade.kit.logging.Logger;
 import blade.kit.logging.LoggerFactory;
 
-public class CacheTest {
+public class CacheUsage {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(CacheTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CacheUsage.class);
 	
 	public void before(){
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);

@@ -1,4 +1,4 @@
-package com.blade.jdbc.test;
+package com.blade.jdbc;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import org.sql2o.Connection;
 import com.blade.jdbc.AR;
 import com.blade.jdbc.DB;
 
-public class ARTest {
+public class ARUsage {
 
 	public void before(){
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);

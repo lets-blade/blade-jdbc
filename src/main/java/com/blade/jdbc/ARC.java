@@ -426,10 +426,10 @@ public class ARC {
 			
 			return connection;
 		} catch (Exception e) {
-			if(null != connection){
+			/*if(null != connection){
 				connection.rollback();
-			}
-			e.printStackTrace();
+			}*/
+			LOGGER.error(e.getMessage(), e);
 		}
 		return connection;
 	}

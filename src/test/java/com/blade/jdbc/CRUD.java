@@ -1,4 +1,4 @@
-package com.blade.jdbc.test;
+package com.blade.jdbc;
 
 import java.util.List;
 
@@ -8,9 +8,9 @@ import com.blade.jdbc.DBJob;
 import blade.kit.logging.Logger;
 import blade.kit.logging.LoggerFactory;
 
-public class CRUDTest {
+public class CRUD {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(CRUDTest.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CRUD.class);
 
 	public void before() {
 		DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root", true);
