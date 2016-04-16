@@ -62,9 +62,9 @@ public abstract class MemoryCache implements Cache {
 	protected  boolean existCustomExpire;
 
 	/**
-     * 淘汰对象具体实现
-     * @return
-     */
+	 * 淘汰对象具体实现
+	 * @return	返回淘汰数
+	 */
     protected abstract int eliminateCache(); 
     
     public MemoryCache() {

@@ -23,7 +23,7 @@ import java.util.List;
  * 
  * @author	<a href="mailto:biezhi.me@gmail.com" target="_blank">biezhi</a>
  * @since	1.0
- * @param <T>
+ * @param <M>
  */
 public class Page<M> {
 
@@ -77,12 +77,7 @@ public class Page<M> {
 	 * 数据集
 	 */
 	private List<M> results = new ArrayList<M>();
-
-	/**
-	 * @param totleCount 	总记录数
-	 * @param page			当前第几页
-	 * @param pageSize	 	每页显示条数
-	 */
+	
 	public Page(long totalCount, int page, int pageSize) {
 
 		this.page = page;
