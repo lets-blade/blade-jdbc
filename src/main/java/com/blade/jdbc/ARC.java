@@ -433,7 +433,7 @@ public class ARC {
 		try {
 			Query query = this.buildQuery(this.executeSql);
 			Object result = query.executeUpdate().getKey();
-			this.close(false);
+			this.close(true);
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
