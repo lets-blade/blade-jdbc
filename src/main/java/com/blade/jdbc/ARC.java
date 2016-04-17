@@ -233,11 +233,9 @@ public class ARC {
 				}
 				LOGGER.debug("<==  Total: {}", total);
 			}
-			
+			this.close(false);
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			close(false);
 		}
 		return result;
 	}
@@ -262,10 +260,9 @@ public class ARC {
 		Page<T> pageResult = new Page<T>(rows, page, pageSize);
 		try {
 			pageResult.setResults(result);
+			this.close(false);
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			close(false);
 		}
 		return pageResult;
 	}
@@ -304,10 +301,9 @@ public class ARC {
 				}
 				LOGGER.debug("<==  Total: {}", total);
 			}
+			this.close(false);
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			close(false);
 		}
 		return result;
 	}
@@ -347,10 +343,9 @@ public class ARC {
 				result = query.executeAndFetchFirst(Long.class);
 				LOGGER.debug("<==  Total: {}", result);
 			}
+			this.close(false);
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			close(false);
 		}
 		return result;
 	}
@@ -438,11 +433,10 @@ public class ARC {
 		try {
 			Query query = this.buildQuery(this.executeSql);
 			Object result = query.executeUpdate().getKey();
+			this.close(false);
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			close(true);
 		}
 		return null;
 	}
