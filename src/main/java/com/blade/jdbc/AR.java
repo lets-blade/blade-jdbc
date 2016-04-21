@@ -91,4 +91,62 @@ public final class AR {
 			DB.cache.clean();
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T getType(Object object) {
+		if(null != object){
+			return (T) object;
+		}
+		return null;
+	}
+	
+	public static Long getLong(Object object) {
+		if(null != object){
+			return Long.valueOf(object.toString());
+		}
+		return null;
+	}
+	
+	public static String getString(Object object) {
+		if(null != object){
+			return object.toString();
+		}
+		return null;
+	}
+	
+	public static Double getDouble(Object object) {
+		if(null != object){
+			return Double.valueOf(object.toString());
+		}
+		return null;
+	}
+	
+	public static Float getFloat(Object object) {
+		if(null != object){
+			return Float.valueOf(object.toString());
+		}
+		return null;
+	}
+	
+	public static Boolean getBoolean(Object object) {
+		if(null != object){
+			return Boolean.valueOf(object.toString());
+		}
+		return null;
+	}
+	
+	public static Byte getByte(Object object) {
+		if(null != object){
+			return Byte.valueOf(object.toString());
+		}
+		return null;
+	}
+	
+	public static Short getShort(Object object) {
+		if(null != object){
+			return Short.valueOf(object.toString());
+		}
+		return null;
+	}
+	
 }

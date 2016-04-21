@@ -18,6 +18,8 @@ package com.blade.jdbc;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,6 +49,18 @@ public class ARKit {
 	static int indexOf(final CharSequence cs, final CharSequence searchChar, final int start) {
         return cs.toString().indexOf(searchChar.toString(), start);
     }
+	
+	@SuppressWarnings("unchecked")
+	private static final List<Class<?>> BASICTYPES = new ArrayList<Class<?>>(
+			Arrays.asList(Long.class, Integer.class, String.class, Double.class, Float.class, Date.class, Boolean.class, Byte.class, Short.class)
+			);
+	
+	public static boolean isBasicType(Class<?> type){
+		if(null == type){
+			return false;
+		}
+		return BASICTYPES.contains(type);
+	}
 	
 	public static String getTable(String sql){
 		Pattern pattern = Pattern.compile("from(\\s+)(\\w+)(\\s*)");

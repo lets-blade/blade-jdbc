@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.sql2o.Connection;
 import org.sql2o.Query;
@@ -178,8 +179,30 @@ public class ARC {
 		return this.list(type, false);
 	}
 	
+	@SuppressWarnings("unchecked")
+	public Map<String,Object> map() {
+		Map<String,Object> result = this.buildQuery(this.executeSql).executeScalar(Map.class);
+		long total = (null != result) ? 1 : 0;
+		LOGGER.debug("<==  Total: {}", total);
+		this.close(false);
+		return result;
+	}
+	
+	public List<Map<String,Object>> listmap() {
+		List<Map<String,Object>> result = this.buildQuery(this.executeSql).executeAndFetchTable().asList();
+		long total = 0L;
+		if(null != result){
+			total = result.size();
+		}
+		LOGGER.debug("<==  Total: {}", total);
+		this.close(false);
+		return result;
+	}
+	
 	public <T extends Serializable> List<T> list(Class<T> type, boolean isPage) {
-		autoAdd(type);
+		if(!ARKit.isBasicType(type)){
+			autoAdd(type);
+		}
 		
 		List<T> result = null;
 		int total = 0;
@@ -208,7 +231,7 @@ public class ARC {
 					String fidSql = this.executeSql.replaceFirst("\\*", pkName);
 					Query query = this.buildQuery(fidSql);
 					
-					List<Long> ids = query.executeAndFetch(Long.class);
+					List<Long> ids = query.executeScalarList(Long.class);
 					if(null != ids){
 						total = ids.size();
 						LOGGER.debug("<==  Total: {}", total);
@@ -227,7 +250,12 @@ public class ARC {
 				}
 			} else {
 				Query query = this.buildQuery(this.executeSql);
-				result = query.executeAndFetch(type);
+				if(!ARKit.isBasicType(type)){
+					result = query.executeAndFetch(type);
+				} else {
+					result = query.executeScalarList(type);
+				}
+				
 				if(null != result){
 					total = result.size();
 				}
@@ -269,7 +297,9 @@ public class ARC {
 	
 	public <T extends Serializable> T first(Class<T> type) {
 		
-		autoAdd(type);
+		if(!ARKit.isBasicType(type)){
+			autoAdd(type);
+		}
 		
 		T result = null;
 		int total = 0;
@@ -284,7 +314,11 @@ public class ARC {
 					result = result_cache;
 				} else {
 					Query query = this.buildQuery(this.executeSql);
-					result = query.executeAndFetchFirst(type);
+					if(!ARKit.isBasicType(type)){
+						result = query.executeAndFetchFirst(type);
+					} else {
+						result = query.executeScalar(type);
+					}
 					if(null != result){
 						DB.cache.hset(cacheKey, cacheField, result);
 					}
@@ -295,7 +329,11 @@ public class ARC {
 				}
 			} else {
 				Query query = this.buildQuery(this.executeSql);
-				result = query.executeAndFetchFirst(type);
+				if(!ARKit.isBasicType(type)){
+					result = query.executeAndFetchFirst(type);
+				} else {
+					result = query.executeScalar(type);
+				}
 				if(null != result){
 					total = 1;
 				}
