@@ -132,7 +132,7 @@ public class ARC {
 	private <T> String getCacheKey(String sql, Class<T> type){
 		String tableName = "";
 		
-		if(null != type && type.getSuperclass().equals(Serializable.class)){
+		if(null != type && type.getSuperclass().equals(Serializable.class) && !ARKit.isBasicType(type)){
 			tableName = ARKit.tableName(type);
 		} else {
 			tableName = ARKit.getTable(sql);
@@ -169,7 +169,7 @@ public class ARC {
 	// 自动弥补查询语句中没有写 select * from
 	private <T> void autoAdd(Class<T> type){
 		// 没有select * from xxx
-		if(this.executeSql.indexOf("select") == -1){
+		if(this.executeSql.indexOf("select") == -1 && !ARKit.isBasicType(type)){
 			String prfix = "select * from " + ARKit.tableName(type) + " ";
 			this.executeSql = prfix + this.executeSql;
 		}
@@ -199,6 +199,7 @@ public class ARC {
 		return result;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T extends Serializable> List<T> list(Class<T> type, boolean isPage) {
 		if(!ARKit.isBasicType(type)){
 			autoAdd(type);
@@ -213,38 +214,56 @@ public class ARC {
 				String cacheKey = this.getCacheKey(this.executeSql, type) + "_list";
 				String cacheField = this.getCacheField(this.executeSql);
 				
-				List<Long> list_cache = DB.cache.hget(cacheKey, cacheField);
+				List<Serializable> list_cache = DB.cache.hget(cacheKey, cacheField);
 				
 				if(null != list_cache){
 					if(list_cache.size() > 0){
-						result = new ArrayList<T>(list_cache.size());
-						for (Serializable id : list_cache) {
-							T t = AR.findById(type, id);
-							if(null != t){
-								result.add(t);
-							}
-		                }
-					}
-				} else {
-					
-					String pkName = ARKit.pkName(type);
-					String fidSql = this.executeSql.replaceFirst("\\*", pkName);
-					Query query = this.buildQuery(fidSql);
-					
-					List<Long> ids = query.executeScalarList(Long.class);
-					if(null != ids){
-						total = ids.size();
-						LOGGER.debug("<==  Total: {}", total);
-						
-						if(total > 0){
-							result = new ArrayList<T>(total);
-							for (Serializable id : ids) {
+						if(!ARKit.isBasicType(type)){
+							result = new ArrayList<T>(list_cache.size());
+							for (Serializable id : list_cache) {
 								T t = AR.findById(type, id);
 								if(null != t){
 									result.add(t);
 								}
 			                }
-							DB.cache.hset(cacheKey, cacheField, ids);
+						} else {
+							result = (List<T>) list_cache;
+						}
+					}
+				} else {
+					
+					Query query = null;
+					if(!ARKit.isBasicType(type)){
+						String pkName = ARKit.pkName(type);
+						String fidSql = this.executeSql.replaceFirst("\\*", pkName);
+						query = this.buildQuery(fidSql);
+						
+						List<Long> ids = query.executeScalarList(Long.class);
+						if(null != ids){
+							total = ids.size();
+							LOGGER.debug("<==  Total: {}", total);
+							
+							if(total > 0){
+								result = new ArrayList<T>(total);
+								for (Serializable id : ids) {
+									T t = AR.findById(type, id);
+									if(null != t){
+										result.add(t);
+									}
+				                }
+								DB.cache.hset(cacheKey, cacheField, ids);
+							}
+						}
+						
+					} else {
+						query = this.buildQuery(this.executeSql);
+						result = query.executeScalarList(type);
+						if(null != result){
+							total = result.size();
+							LOGGER.debug("<==  Total: {}", total);
+							if(total > 0){
+								DB.cache.hset(cacheKey, cacheField, result);
+							}
 						}
 					}
 				}
