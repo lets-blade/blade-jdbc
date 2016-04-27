@@ -490,6 +490,15 @@ public class ARC {
 		try {
 			Query query = this.buildQuery(this.executeSql);
 			Object result = query.executeUpdate().getKey();
+			if(isCache && null != result){
+				String table = ARKit.getTable(this.executeSql);
+				if(this.executeSql.indexOf("insert") != -1){
+					DB.cache.hdel(table + "_list");
+					DB.cache.hdel(table + "_count");
+					DB.cache.hdel(table + "_detail");
+					LOGGER.debug("update cache:{}", table);
+				}
+			}
 			this.close(true);
 			return result;
 		} catch (Exception e) {
