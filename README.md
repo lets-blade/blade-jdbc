@@ -8,6 +8,16 @@ blade-jdbc 是基于 sql2o 开发的一个简洁的ORM库，可作为学习使�
 
 ## 使用
 
+**Maven仓库地址**
+
+```xml
+<dependency>
+    <groupId>com.bladejava</groupId>
+    <artifactId>blade-jdbc</artifactId>
+    <version>0.1.1</version>
+</dependency>
+```
+
 ```java
 // 连接数据库
 DB.open("com.mysql.jdbc.Driver", "jdbc:mysql://127.0.0.1/test", "root", "root");
