@@ -238,14 +238,14 @@ public class ARC {
 						String fidSql = this.executeSql.replaceFirst("\\*", pkName);
 						query = this.buildQuery(fidSql);
 						
-						List<Long> ids = query.executeScalarList(Long.class);
+						List<String> ids = query.executeScalarList(String.class);
 						if(null != ids){
 							total = ids.size();
 							LOGGER.debug("<==  Total: {}", total);
 							
 							if(total > 0){
 								result = new ArrayList<T>(total);
-								for (Serializable id : ids) {
+								for (String id : ids) {
 									T t = AR.findById(type, id);
 									if(null != t){
 										result.add(t);
