@@ -49,8 +49,13 @@ public class Query {
 	}
 
 	public <T> boolean isCache(Class<T> clazz){
-		ModelInfo modelInfo = dialect.getModelInfo(clazz);
-		return modelInfo.isCached() && this.cached;
+		if(null != clazz){
+			ModelInfo modelInfo = dialect.getModelInfo(clazz);
+			if(null != modelInfo){
+				return modelInfo.isCached() && this.cached;
+			}
+		}
+		return Base.GLOBAL_CACHED && this.cached;
 	}
 	
 	public Query cached(boolean cached){
@@ -549,31 +554,63 @@ public class Query {
 		return null;
 	}
 	
-	public Query insert(Object row) {
+	public <T> T insert(Object row) {
+		return insert(row, true);
+	}
+	
+	public <T> T insert(Object row, boolean commit) {
 		insertRow = row;
 		sql = dialect.getInsertSql(this, row);
 		argList = Arrays.asList(dialect.getInsertArgs(this, row));
-		this.execute();
+		this.execute(commit);
+		
+		Class<?> clazz = row.getClass();
+		if(isCache(clazz)){
+			ModelInfo modelInfo = dialect.getModelInfo(clazz);
+			String cacheField = modelInfo.getPK(row).toString();
+			
+			Base.CACHE.del(modelInfo.getTable() + "_list");
+			Base.CACHE.del(modelInfo.getTable() + "_count");
+			LOGGER.debug("缓存更新：table = [{}], field = [{}]", modelInfo.getTable(), cacheField);
+		}
+		return (T) insertRow;
+	}
+	
+	public Query update(Object row) {
+		return this.update(row, true);
+	}
+	
+	public Query update(Object row, boolean commit) {
+		sql = dialect.getUpdateByPKSql(this, row);
+		argList = Arrays.asList(dialect.getUpdateArgs(this, row));
+		this.execute(commit);
+		
+		Class<?> clazz = row.getClass();
+		if(isCache(clazz)){
+			ModelInfo modelInfo = dialect.getModelInfo(clazz);
+			
+			String cacheKey = modelInfo.getTable() + "_rows";
+			String cacheField = modelInfo.getPK(row).toString();
+			
+			Base.CACHE.del(modelInfo.getTable() + "_count");
+			Base.CACHE.hdel(modelInfo.getTable() + "_rows", modelInfo.getPK(row).toString());
+			LOGGER.debug("缓存更新：key = [{}], field = [{}]", cacheKey, cacheField);
+		}
 		return this;
 	}
-
+	
 	public Query upsert(Object row) {
-		insertRow = row;
+		return upsert(row, true);
+	}
+	
+	public Query upsert(Object row, boolean commit) {
 		sql = dialect.getUpsertSql(this, row);
 		argList = Arrays.asList(dialect.getUpsertArgs(this, row));
-		this.execute();
+		this.execute(commit);
 		return this;
 	}
-
-	public Query update(Object row) {
-		sql = dialect.getUpdateSql(this, row);
-		argList = Arrays.asList(dialect.getUpdateArgs(this, row));
-		this.execute();
-		return this;
-	}
-
-	public Query execute() {
-
+	
+	public Query execute(boolean commit) {
 		Connection con = null;
 		PreparedStatement state = null;
 		try {
@@ -582,7 +619,7 @@ public class Query {
 			} else {
 				con = transaction.getConnection();
 			}
-
+			
 			String lowerSql = sql.toLowerCase();
 			if (lowerSql.contains("insert")) {
 				state = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -602,9 +639,7 @@ public class Query {
 			}
 			
 			rowsAffected = state.executeUpdate();
-
-			// Set auto generated primary key. The code assumes that the primary
-			// key is the only auto generated key.
+			
 			if (insertRow != null) {
 				ResultSet generatedKeys = state.getGeneratedKeys();
 				if (generatedKeys.next()) {
@@ -615,9 +650,12 @@ public class Query {
 			throw new DBException(e);
 		} catch (IllegalArgumentException e) {
 			throw new DBException(e);
-		} /*
-			 * finally { Util.closeQuietly(state); Util.closeQuietly(con); }
-			 */
+		} finally {
+			if (commit) {
+				Util.closeQuietly(state);
+				Util.closeQuietly(con);
+			}
+		}
 		return this;
 	}
 	
@@ -635,18 +673,37 @@ public class Query {
 	
 	public Query createTable(Class<?> clazz) {
 		sql = dialect.getCreateTableSql(clazz);
-		this.execute();
+		this.execute(true);
 		return this;
 	}
 
 	public Query delete(Object row) {
+		return delete(row, true);
+	}
+	
+	public Query delete(Object row, boolean commit) {
 		sql = dialect.getDeleteSql(this, row);
 		argList = Arrays.asList(dialect.getDeleteArgs(this, row));
-		this.execute();
+		this.execute(commit);
+		
+		Class<?> clazz = row.getClass();
+		if(isCache(clazz)){
+			ModelInfo modelInfo = dialect.getModelInfo(clazz);
+			String cacheKey = modelInfo.getTable() + "_rows";
+			String cacheField = modelInfo.getPK(row).toString();
+			Base.CACHE.hdel(cacheKey, modelInfo.getPK(row).toString());
+			Base.CACHE.del(modelInfo.getTable() + "_list");
+			Base.CACHE.del(modelInfo.getTable() + "_count");
+			LOGGER.debug("缓存更新：key = [{}], field = [{}]", cacheKey, cacheField);
+		}
 		return this;
 	}
 
 	public Query delete() {
+		return this.delete(true);
+	}
+	
+	public Query delete(boolean commit) {
 		String table = getTable();
 		if (table == null) {
 			throw new DBException("You must specify a table name with the table() method.");
@@ -655,7 +712,12 @@ public class Query {
 		if (where != null && where.length() > 0) {
 			sql += " where " + where;
 		}
-		this.execute();
+		this.execute(commit);
+		
+		if(isCache(null)){
+			Base.CACHE.clean();
+			LOGGER.debug("清空缓存");
+		}
 		return this;
 	}
 

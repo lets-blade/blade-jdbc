@@ -23,7 +23,7 @@ import blade.jdbc.exception.DBException;
 import blade.jdbc.serialize.DbSerializer;
 
 /**
- * Provides means of reading and writing properties in a pojo.
+ * Provides means of reading and writing properties in a row.
  */
 public class ModelMeta implements ModelInfo {
 
@@ -43,7 +43,7 @@ public class ModelMeta implements ModelInfo {
 	String upsertSql;
 	int upsertSqlArgCount;
 	String[] upsertColumnNames;
-
+	
 	String updateSql;
 	String[] updateColumnNames;
 	int updateSqlArgCount;
@@ -182,8 +182,7 @@ public class ModelMeta implements ModelInfo {
 	 * this.generatedColumnName = propertyName; pair.isGenerated = true; }
 	 * return meth; }
 	 */
-
-	public Object getValue(Object pojo, String name) {
+	public Object getValue(Object row, String name) {
 
 		try {
 
@@ -195,10 +194,10 @@ public class ModelMeta implements ModelInfo {
 			Object value = null;
 
 			if (prop.readMethod != null) {
-				value = prop.readMethod.invoke(pojo);
+				value = prop.readMethod.invoke(row);
 
 			} else if (prop.field != null) {
-				value = prop.field.get(pojo);
+				value = prop.field.get(row);
 			}
 
 			if (value != null) {
@@ -224,7 +223,7 @@ public class ModelMeta implements ModelInfo {
 		}
 	}
 
-	public void putValue(Object pojo, String name, Object value) {
+	public void putValue(Object row, String name, Object value) {
 
 		Property prop = propertyMap.get(name);
 		if (prop == null) {
@@ -241,15 +240,15 @@ public class ModelMeta implements ModelInfo {
 
 		if (prop.writeMethod != null) {
 			try {
-				prop.writeMethod.invoke(pojo, value);
+				prop.writeMethod.invoke(row, value);
 			} catch (IllegalAccessException e) {
-				throw new DBException("Could not write value into pojo. Property: " + prop.name + " method: "
+				throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
 						+ prop.writeMethod.toString() + " value: " + value, e);
 			} catch (IllegalArgumentException e) {
-				throw new DBException("Could not write value into pojo. Property: " + prop.name + " method: "
+				throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
 						+ prop.writeMethod.toString() + " value: " + value, e);
 			} catch (InvocationTargetException e) {
-				throw new DBException("Could not write value into pojo. Property: " + prop.name + " method: "
+				throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
 						+ prop.writeMethod.toString() + " value: " + value, e);
 			}
 			return;
@@ -257,13 +256,13 @@ public class ModelMeta implements ModelInfo {
 
 		if (prop.field != null) {
 			try {
-				prop.field.set(pojo, value);
+				prop.field.set(row, value);
 			} catch (IllegalArgumentException e) {
 				throw new DBException(
-						"Could not set value into pojo. Field: " + prop.field.toString() + " value: " + value, e);
+						"Could not set value into row. Field: " + prop.field.toString() + " value: " + value, e);
 			} catch (IllegalAccessException e) {
 				throw new DBException(
-						"Could not set value into pojo. Field: " + prop.field.toString() + " value: " + value, e);
+						"Could not set value into row. Field: " + prop.field.toString() + " value: " + value, e);
 			}
 			return;
 		}
@@ -320,6 +319,13 @@ public class ModelMeta implements ModelInfo {
 	@Override
 	public boolean isCached() {
 		return this.cached;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getPK(Object row) {
+		Object pk = this.getValue(row, primaryKeyName);
+		return null != pk ? (T)pk : null;
 	}
 
 }

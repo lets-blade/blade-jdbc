@@ -156,7 +156,7 @@ public class RedisCache implements Cache {
 		Jedis jedis = null;
 		try {
 			jedis = getJedis();
-			jedis.del("*");
+			jedis.flushDB();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

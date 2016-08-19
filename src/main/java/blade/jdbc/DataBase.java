@@ -235,7 +235,7 @@ public class DataBase {
 	 * Insert a row into a table. The row pojo can have a @Table annotation to
 	 * specify the table, or you can specify the table with the .table() method.
 	 */
-	public Query insert(Object row) {
+	public <T> T insert(Object row) {
 		return new Query(this).insert(row);
 	}
 

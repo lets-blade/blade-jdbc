@@ -1,5 +1,6 @@
 package blade.jdbc.test;
 
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Before;
@@ -21,6 +22,11 @@ public class CacheTest extends BaseTest {
 		cache = new RedisCache("127.0.0.1");
 //		cache = new DefaultCache();
 		Base.enableCache(cache);
+	}
+	
+	@Test
+	public void testCleanCache(){
+		cache.clean();
 	}
 	
 	@Test
@@ -87,8 +93,8 @@ public class CacheTest extends BaseTest {
 	public void testFindOne(){
 		Person.db.eq("id", 1).first(Person.class);
 		Person.db.eq("id", 1).first(Person.class);
-		Person.db.eq("id", 1).first(Person.class);
-		Person.db.eq("id", 1).first(Person.class);
+		Person.db.eq("id", 2).first(Person.class);
+		Person.db.eq("id", 2).first(Person.class);
 	}
 	
 	/**
@@ -108,6 +114,40 @@ public class CacheTest extends BaseTest {
 	@Test
 	public void testCloseCache(){
 		Person.db.like("name", "ja%").cached(false).count(Person.class);
+	}
+	
+	/**
+	 * 根据主键更新
+	 */
+	@Test
+	public void testUpdateByPk(){
+		Person person = new Person();
+		person.id = 1;
+		person.dob = new Date();
+		Person.db.update(person);
+	}
+	
+	/**
+	 * 删除行
+	 */
+	@Test
+	public void testDelete(){
+		Person person = new Person();
+		person.id = 1;
+		Person.db.delete(person);
+	}
+	
+	/**
+	 * 插入行
+	 */
+	@Test
+	public void testInsert(){
+		Person person = new Person();
+		person.name = "aaa";
+		person.dob = new Date();
+		person.lastName = "bbb";
+		Person p = Person.db.insert(person);
+		System.out.println(p.id);
 	}
 	
 }

@@ -116,7 +116,7 @@ public class CRUDTest extends BaseTest {
 			row2.dob = new Date();
 			int a = 1 /0;
 			System.out.println(a);
-			Person.db.transaction(trans).update(row2);
+			Person.db.transaction(trans).update(row2, true);
 		    trans.commit();
 		} catch (Exception t) {
 		    trans.rollback();
@@ -124,4 +124,14 @@ public class CRUDTest extends BaseTest {
 		}
 	}
 	
+	/**
+	 * 根据主键更新
+	 */
+	@Test
+	public void updateByPk(){
+		Person person = new Person();
+		person.id = 1;
+		person.dob = new Date();
+		Person.db.update(person);
+	}
 }

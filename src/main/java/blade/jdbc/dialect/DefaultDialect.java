@@ -26,7 +26,20 @@ public class DefaultDialect implements Dialect {
 			
 			makeInsertSql(pi);
 			makeUpsertSql(pi);
-			makeUpdateSql(pi);
+			makeUpdateSql(pi, null);
+			makeSelectColumns(pi);
+		}
+		return pi;
+	}
+	
+	public ModelMeta getModelInfo(Class<?> rowClass, Object row) {
+		ModelMeta pi = map.get(rowClass);
+		if (pi == null) {
+			pi = new ModelMeta(rowClass);
+			map.put(rowClass, pi);
+			
+			makeInsertSql(pi);
+			makeUpdateSql(pi, row);
 			makeSelectColumns(pi);
 		}
 		return pi;
@@ -56,6 +69,15 @@ public class DefaultDialect implements Dialect {
 		}
 		return modelMeta.updateSql;
 	}
+	
+	@Override
+	public String getUpdateByPKSql(Query query, Object row) {
+		ModelMeta modelMeta = getModelInfo(row.getClass(), row);
+		if (modelMeta.primaryKeyName == null) {
+			throw new DBException("No primary key specified in the row. Use the @Id annotation.");
+		}
+		return modelMeta.updateSql;
+	}
 
 	@Override
 	public Object[] getUpdateArgs(Query query, Object row) {
@@ -70,21 +92,26 @@ public class DefaultDialect implements Dialect {
 		args[modelMeta.updateSqlArgCount - 1] = pk;
 		return args;
 	}
-
-	public void makeUpdateSql(ModelMeta modelMeta) {
+	
+	public void makeUpsertSql(ModelMeta modelMeta){
+	}
+	
+	public void makeUpdateSql(ModelMeta modelMeta, Object row) {
 		ArrayList<String> cols = new ArrayList<String>();
 		for (Property prop: modelMeta.propertyMap.values()) {
-			
-			if (prop.isPrimaryKey) {
+			if (prop.isPrimaryKey || prop.isGenerated) {
 				continue;
 			}
-			
-			if (prop.isGenerated) {
-				continue;
+			if(null != row){
+				Object value = modelMeta.getValue(row, prop.name);
+				if(null != value){
+					cols.add(prop.name);
+				}
+			} else{
+				cols.add(prop.name);
 			}
-			
-			cols.add(prop.name);
 		}
+		
 		modelMeta.updateColumnNames = cols.toArray(new String [cols.size()]);
 		modelMeta.updateSqlArgCount = modelMeta.updateColumnNames.length + 1; // + 1 for the where arg
 		
@@ -97,9 +124,10 @@ public class DefaultDialect implements Dialect {
 			if (i > 0) {
 				buf.append(',');
 			}
-			buf.append(cols.get(i) + "=?");
+			buf.append(cols.get(i) + " = ?");
 		}
-		buf.append(" where " + modelMeta.primaryKeyName + "=?");
+		
+		buf.append(" where " + modelMeta.primaryKeyName + " = ?");
 		
 		modelMeta.updateSql = buf.toString();
 	}
@@ -128,9 +156,6 @@ public class DefaultDialect implements Dialect {
 		buf.append(")");
 		
 		modelMeta.insertSql = buf.toString();
-	}
-	
-	public void makeUpsertSql(ModelMeta modelMeta) {
 	}
 	
 	private void makeSelectColumns(ModelMeta modelMeta) {
@@ -162,28 +187,6 @@ public class DefaultDialect implements Dialect {
 		if(whereAndOrderby.length() > 0){
 			out.append(whereAndOrderby);
 		}
-		return out.toString();
-	}
-	
-	@Override
-	public String getSelectByPKSql(Class<?> rowClass) {
-		// unlike insert and update, this needs to be done dynamically
-		// and can't be precalculated because of the where and order by
-		ModelMeta modelMeta = getModelInfo(rowClass);
-		String columns = modelMeta.selectColumns;
-		
-		String table = modelMeta.getTable();
-		if (table == null) {
-			table = modelMeta.table;
-		}
-		StringBuilder out = new StringBuilder();
-		out.append("select ");
-		out.append(columns);
-		out.append(" from ");
-		out.append(table);
-		out.append(" where ");
-		out.append(modelMeta.primaryKeyName);
-		out.append(" = ?");
 		return out.toString();
 	}
 	

@@ -27,7 +27,7 @@ public class MySqlDialect extends DefaultDialect {
 
 	@Override
 	public void makeUpsertSql(ModelMeta modelMeta) {
-
+		
 		// INSERT INTO table (a,b,c) VALUES (1,2,3) ON DUPLICATE KEY UPDATE
 		// c=c+1;
 
@@ -37,7 +37,7 @@ public class MySqlDialect extends DefaultDialect {
 		StringBuilder buf = new StringBuilder();
 		buf.append(modelMeta.insertSql);
 		buf.append(" on duplicate key update ");
-
+		
 		boolean first = true;
 		for (String colName : modelMeta.insertColumnNames) {
 			if (first) {
