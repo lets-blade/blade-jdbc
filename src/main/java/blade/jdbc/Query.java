@@ -221,7 +221,7 @@ public class Query {
 				}
 			}
 			if(this.isCache(clazz) && null != result){
-				LOGGER.debug("缓存设置：key = [{}], field = [{}], value = [{}]", cacheKey, cacheField, result);
+				LOGGER.debug("缓存设置：key = [{}], field = [{}]", cacheKey, cacheField);
 				Base.CACHE.hset(cacheKey, cacheField, result, Const.CACHE_EXPIRE_TIME);
 			}
 			LOGGER.debug("Records\t<= {}", result == null ? 0 : 1);
@@ -301,7 +301,7 @@ public class Query {
 			LOGGER.debug("Records\t<= {}", count);
 			
 			if(this.isCache(clazz)){
-				LOGGER.debug("缓存设置：key = [{}], field = [{}], value = [{}]", cacheKey, cacheField, count);
+				LOGGER.debug("缓存设置：key = [{}], field = [{}]", cacheKey, cacheField);
 				Base.CACHE.hset(cacheKey, cacheField, count, Const.CACHE_EXPIRE_TIME);
 			}
 			
@@ -438,7 +438,7 @@ public class Query {
 			LOGGER.debug("Records\t<= {}", out.size());
 			
 			if(this.isCache(clazz)){
-				LOGGER.debug("缓存设置：key = [{}], field = [{}], value = [{}]", cacheKey, cacheField, out);
+				LOGGER.debug("缓存设置：key = [{}], field = [{}]", cacheKey, cacheField);
 				Base.CACHE.hset(cacheKey, cacheField, out, Const.CACHE_EXPIRE_TIME);
 			}
 		} catch (SQLException e) {

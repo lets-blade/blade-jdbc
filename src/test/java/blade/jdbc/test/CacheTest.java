@@ -8,7 +8,7 @@ import org.junit.Test;
 import blade.jdbc.Base;
 import blade.jdbc.Pager;
 import blade.jdbc.cache.Cache;
-import blade.jdbc.cache.RedisCache;
+import blade.jdbc.cache.DefaultCache;
 import blade.jdbc.model.Person;
 
 public class CacheTest extends BaseTest {
@@ -18,8 +18,8 @@ public class CacheTest extends BaseTest {
 	@Before
 	public void before2(){
 		// 开启缓存
-		cache = new RedisCache("127.0.0.1");
-//		cache = new DefaultCache();
+//		cache = new RedisCache("127.0.0.1");
+		cache = new DefaultCache();
 		Base.enableCache(cache);
 	}
 	
