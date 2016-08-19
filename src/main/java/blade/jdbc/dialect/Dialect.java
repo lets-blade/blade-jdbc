@@ -26,7 +26,7 @@ public interface Dialect {
 	
 	String getCountSql(Query query, Class<?> rowClass);
 
-	String getPageSql(Query query, int page, int count, Class<?> rowClass);
+	String getPageSql(Query query, Class<?> rowClass);
 	
 	String getCreateTableSql(Class<?> clazz);
 

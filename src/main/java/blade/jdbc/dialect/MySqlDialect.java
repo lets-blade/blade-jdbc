@@ -53,7 +53,7 @@ public class MySqlDialect extends DefaultDialect {
 	}
 
 	@Override
-	public String getPageSql(Query query, int page, int count, Class<?> rowClass) {
+	public String getPageSql(Query query, Class<?> rowClass) {
 		
 		ModelMeta modelMeta = getModelInfo(rowClass);
 		String columns = modelMeta.selectColumns;

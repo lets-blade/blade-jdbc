@@ -259,7 +259,7 @@ public class DataBase {
 		return new Query(this).list(clazz);
 	}
 	
-	public <T> List<T> page(int page, int count, Class<T> clazz) {
+	public <T> Pager<T> page(int page, int count, Class<T> clazz) {
 		return new Query(this).page(page, count, clazz);
 	}
 

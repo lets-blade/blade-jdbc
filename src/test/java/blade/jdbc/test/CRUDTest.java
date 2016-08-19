@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import blade.jdbc.Pager;
 import blade.jdbc.model.Person;
 import blade.jdbc.tx.Transaction;
 
@@ -29,7 +30,7 @@ public class CRUDTest extends BaseTest {
 	
 	@Test
 	public void testPage(){
-		List<Person> person = Person.db.like("name", "ja%").page(0, 10, Person.class);
+		Pager<Person> person = Person.db.page(1, 6, Person.class);
 		System.out.println(person);
 	}
 	

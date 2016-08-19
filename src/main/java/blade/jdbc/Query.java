@@ -30,7 +30,7 @@ public class Query {
 	private StringBuffer where = new StringBuffer();
 	private String orderBy;
 
-	private List<Object> args = new ArrayList<Object>();
+	private List<Object> argList = new ArrayList<Object>();
 
 	private int rowsAffected;
 
@@ -46,7 +46,7 @@ public class Query {
 	public Query where(String where, Object... args) {
 		this.where.append(" and ");
 		this.where.append(where);
-		this.args.addAll(Arrays.asList(args));
+		this.argList.addAll(Arrays.asList(args));
 		return this;
 	}
 	
@@ -109,13 +109,13 @@ public class Query {
 	
 	public Query sql(String sql, Object... args) {
 		this.sql = sql;
-		this.args = Arrays.asList(args);
+		this.argList = Arrays.asList(args);
 		return this;
 	}
 
-	public Query sql(String sql, List<Object> args) {
+	public Query sql(String sql, List<Object> argList) {
 		this.sql = sql;
-		this.args = args;
+		this.argList = argList;
 		return this;
 	}
 
@@ -139,10 +139,12 @@ public class Query {
 		
 		Connection con = null;
 		PreparedStatement state = null;
-
+		
+		String querySql = this.sql;
+		
 		try {
-			if (sql == null) {
-				sql = dialect.getCountSql(this, clazz);
+			if (querySql == null) {
+				querySql = dialect.getCountSql(this, clazz);
 			}
 
 			Connection localCon;
@@ -153,14 +155,16 @@ public class Query {
 				localCon = transaction.getConnection();
 			}
 			
-			LOGGER.debug("Preparing\t=> {}", sql);
+			LOGGER.debug("Preparing\t=> {}", querySql);
 
-			state = localCon.prepareStatement(sql);
-
+			state = localCon.prepareStatement(querySql);
+			
 			// load args
 			Object[] args = this.loadArgs(state);
+			if(null != args){
+				LOGGER.debug("Parameters\t=> {}", Arrays.toString(args));
+			}
 			
-			LOGGER.debug("Parameters\t=> {}", Arrays.toString(args));
 			ResultSet rs = state.executeQuery();
 			if(rs.next()){
 				count = rs.getLong(1);
@@ -227,13 +231,25 @@ public class Query {
 		return out;
 	}
 
-	public <T> List<T> page(int page, int count, Class<T> clazz) {
+	public <T> Pager<T> page(int page, int limit, Class<T> clazz) {
+		
+		// query count
+		Long total = this.count(clazz);
+		
+		Pager<T> pager = new Pager<T>(total, page, limit);
+		
 		if (sql == null) {
-			sql = dialect.getPageSql(this, page, count, clazz);
+			sql = dialect.getPageSql(this, clazz);
 		}
-		this.args.add(page);
-		this.args.add(count);
-		return this.list(clazz);
+		
+		int offset = (pager.getPageNum() - 1) * limit;
+		
+		this.argList.add(offset);
+		this.argList.add(limit);
+		
+		List<T> result = this.list(clazz);
+		pager.setList(result);
+		return pager;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -246,12 +262,13 @@ public class Query {
 		List<T> out = new ArrayList<T>();
 		Connection con = null;
 		PreparedStatement state = null;
-
+		
+		String querySql = this.sql;
 		try {
-			if (sql == null) {
-				sql = dialect.getSelectSql(this, clazz);
+			if (querySql == null) {
+				querySql = dialect.getSelectSql(this, clazz);
 			}
-
+			
 			Connection localCon;
 			if (transaction == null) {
 				localCon = db.getConnection();
@@ -260,9 +277,9 @@ public class Query {
 				localCon = transaction.getConnection();
 			}
 
-			LOGGER.debug("Preparing\t=> {}", sql);
+			LOGGER.debug("Preparing\t=> {}", querySql);
 
-			state = localCon.prepareStatement(sql);
+			state = localCon.prepareStatement(querySql);
 
 			// load args
 			Object[] args = this.loadArgs(state);
@@ -312,8 +329,8 @@ public class Query {
 	}
 
 	private Object[] loadArgs(PreparedStatement state) throws SQLException {
-		if (args != null) {
-			Object[] argsObj = args.toArray();
+		if (null != argList && !argList.isEmpty()) {
+			Object[] argsObj = argList.toArray();
 			for (int i = 0, len = argsObj.length; i < len; i++) {
 				state.setObject(i + 1, argsObj[i]);
 			}
@@ -325,7 +342,7 @@ public class Query {
 	public Query insert(Object row) {
 		insertRow = row;
 		sql = dialect.getInsertSql(this, row);
-		args = Arrays.asList(dialect.getInsertArgs(this, row));
+		argList = Arrays.asList(dialect.getInsertArgs(this, row));
 		this.execute();
 		return this;
 	}
@@ -333,14 +350,14 @@ public class Query {
 	public Query upsert(Object row) {
 		insertRow = row;
 		sql = dialect.getUpsertSql(this, row);
-		args = Arrays.asList(dialect.getUpsertArgs(this, row));
+		argList = Arrays.asList(dialect.getUpsertArgs(this, row));
 		this.execute();
 		return this;
 	}
 
 	public Query update(Object row) {
 		sql = dialect.getUpdateSql(this, row);
-		args = Arrays.asList(dialect.getUpdateArgs(this, row));
+		argList = Arrays.asList(dialect.getUpdateArgs(this, row));
 		this.execute();
 		return this;
 	}
@@ -366,15 +383,14 @@ public class Query {
 			LOGGER.debug("Preparing\t=> {}", sql);
 
 			Object[] argsObj = null;
-			if (args != null) {
-				argsObj = args.toArray();
+			if (null != argList && !argList.isEmpty()) {
+				argsObj = argList.toArray();
 				for (int i = 0; i < argsObj.length; i++) {
 					state.setObject(i + 1, argsObj[i]);
 				}
+				LOGGER.debug("Parameters\t=> {}", Arrays.toString(argsObj));
 			}
-
-			LOGGER.debug("Parameters\t=> {}", Arrays.toString(argsObj));
-
+			
 			rowsAffected = state.executeUpdate();
 
 			// Set auto generated primary key. The code assumes that the primary
@@ -403,7 +419,7 @@ public class Query {
 
 	public Query delete(Object row) {
 		sql = dialect.getDeleteSql(this, row);
-		args = Arrays.asList(dialect.getDeleteArgs(this, row));
+		argList = Arrays.asList(dialect.getDeleteArgs(this, row));
 		this.execute();
 		return this;
 	}
