@@ -7,5 +7,9 @@ public interface ModelInfo {
 	void putValue(Object pojo, String name, Object value);
 
 	Property getGeneratedColumnProperty();
-
+	
+	String getTable();
+	
+	String getPrimaryKeyName();
+	
 }

@@ -1,5 +1,6 @@
 package blade.jdbc;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -131,6 +132,13 @@ public class Query {
 		} else {
 			return null;
 		}
+	}
+	
+	public <T> T findByPK(Serializable pk, Class<T> clazz) {
+		ModelInfo modelInfo = dialect.getModelInfo(clazz);
+		String pkField = modelInfo.getPrimaryKeyName();
+		this.eq(pkField, pk);
+		return this.first(clazz);
 	}
 	
 	public <T> Long count(Class<T> clazz){

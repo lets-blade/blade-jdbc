@@ -1,5 +1,6 @@
 package blade.jdbc;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -269,6 +270,10 @@ public class DataBase {
 	 */
 	public <T> T first(Class<T> clazz) {
 		return new Query(this).first(clazz);
+	}
+	
+	public <T> T findByPK(Serializable pk, Class<T> clazz) {
+		return new Query(this).findByPK(pk, clazz);
 	}
 	
 	public <T> Long count(Class<T> clazz) {

@@ -298,4 +298,24 @@ public class ModelMeta implements ModelInfo {
 		return propertyMap.get(generatedColumnName);
 	}
 
+	public LinkedHashMap<String, Property> getPropertyMap() {
+		return propertyMap;
+	}
+
+	public String getTable() {
+		return table;
+	}
+
+	public String getPrimaryKeyName() {
+		return primaryKeyName;
+	}
+
+	public String getGeneratedColumnName() {
+		return generatedColumnName;
+	}
+
+	public String getSelectColumns() {
+		return selectColumns;
+	}
+
 }
