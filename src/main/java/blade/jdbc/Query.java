@@ -558,6 +558,7 @@ public class Query {
 		return insert(row, true);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T insert(Object row, boolean commit) {
 		insertRow = row;
 		sql = dialect.getInsertSql(this, row);

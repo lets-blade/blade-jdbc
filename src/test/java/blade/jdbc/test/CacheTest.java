@@ -1,7 +1,6 @@
 package blade.jdbc.test;
 
 import java.util.Date;
-import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,10 +45,10 @@ public class CacheTest extends BaseTest {
 	 */
 	@Test
 	public void testByPK(){
-		Person person = Person.db.findByPK(1, Person.class);
-		person = Person.db.findByPK(1, Person.class);
-		person = Person.db.findByPK(1, Person.class);
-		person = Person.db.findByPK(1, Person.class);
+		Person.db.findByPK(1, Person.class);
+		Person.db.findByPK(1, Person.class);
+		Person.db.findByPK(1, Person.class);
+		Person.db.findByPK(1, Person.class);
 	}
 	
 	/**
@@ -57,10 +56,10 @@ public class CacheTest extends BaseTest {
 	 */
 	@Test
 	public void testPKList(){
-		List<Integer> ids = Person.db.lt("id", 10).pklist(Person.class);
-		ids = Person.db.lt("id", 10).pklist(Person.class);
-		ids = Person.db.lt("id", 10).pklist(Person.class);
-		ids = Person.db.lt("id", 10).pklist(Person.class);
+		Person.db.lt("id", 10).pklist(Person.class);
+		Person.db.lt("id", 10).pklist(Person.class);
+		Person.db.lt("id", 10).pklist(Person.class);
+		Person.db.lt("id", 10).pklist(Person.class);
 	}
 	
 	/**
