@@ -29,11 +29,9 @@ public class DataBase {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataBase.class);
 
-	public static final String DEFAULT_NAME = "default_blade_1";
-	
 	private Dialect dialect = new DefaultDialect();
 	private DataSource datasource;
-	private String name = DEFAULT_NAME;
+	private String name = Const.DEFAULT_DB_NAME;
 	
 	public DataBase(String name) {
 		this.name = name;
@@ -46,7 +44,7 @@ public class DataBase {
 	public void open(String driver, String url, String user, String pass) {
 		try {
 			Connection connection = DriverManager.getConnection(driver, user, pass);
-			ConnectionsAccess.attach(DataBase.DEFAULT_NAME, connection, url);
+			ConnectionsAccess.attach(Const.DEFAULT_DB_NAME, connection, url);
 		} catch (SQLException e) {
 			throw new InitException("Failed to connect to JDBC URL: " + url, e);
 		}
@@ -119,7 +117,7 @@ public class DataBase {
 							+ ". This might indicate a logical error in your application.");
 		}
 	}
-
+	
 	/**
 	 * Create a query using straight SQL. Overrides any other methods like
 	 * .where(), .orderBy(), etc.
@@ -258,6 +256,14 @@ public class DataBase {
 	 */
 	public <T> List<T> list(Class<T> clazz) {
 		return new Query(this).list(clazz);
+	}
+	
+	public <T> List<T> list(String sql, Class<T> clazz) {
+		return new Query(this).list(sql, clazz);
+	}
+	
+	public <T extends Serializable> List<T> pklist(Class<?> clazz) {
+		return new Query(this).pklist(clazz);
 	}
 	
 	public <T> Pager<T> page(int page, int count, Class<T> clazz) {

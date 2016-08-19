@@ -22,6 +22,10 @@ public interface Dialect {
 
 	Object[] getUpsertArgs(Query query, Object row);
 
+	String getPKSql(Query query, Class<?> rowClass);
+
+	String getSelectByPKSql(Class<?> clazz);
+	
 	String getSelectSql(Query query, Class<?> rowClass);
 	
 	String getCountSql(Query query, Class<?> rowClass);

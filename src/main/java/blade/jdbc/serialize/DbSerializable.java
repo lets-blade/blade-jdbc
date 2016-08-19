@@ -7,7 +7,9 @@ package blade.jdbc.serialize;
 public interface DbSerializable {
 
 	String serialize(Object in);
-
+	
+	Object deserialize(String in);
+	
 	Object deserialize(String in, Class<?> targetClass);
-
+	
 }

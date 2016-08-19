@@ -18,6 +18,8 @@
 		<hikaricp.version>2.4.1</hikaricp.version>
 		<druid.version>1.0.24</druid.version>
 		<slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
+		<redis.version>2.9.0</redis.version>
+		<fastjson.version>1.2.16</fastjson.version>
 	</properties>
 
 	<dependencies>
@@ -28,6 +30,13 @@
 			<version>${slf4j-api.version}</version>
 		</dependency>
 		
+		<dependency>
+		    <groupId>redis.clients</groupId>
+		    <artifactId>jedis</artifactId>
+		    <version>${redis.version}</version>
+		    <scope>compile</scope>
+		</dependency>
+				
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -61,6 +70,7 @@
 		    <version>${slf4j-log4j12.version}</version>
 		    <scope>test</scope>
 		</dependency>
+		
 	</dependencies>
 
 	<build>

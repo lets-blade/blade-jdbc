@@ -14,6 +14,7 @@ import blade.jdbc.exception.InternalException;
 public class ConnectionsAccess {
 	
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionsAccess.class);
+    
     private static final ThreadLocal<HashMap<String, Connection>> connectionsTL = new ThreadLocal<HashMap<String,Connection>>();
     
     private ConnectionsAccess() {

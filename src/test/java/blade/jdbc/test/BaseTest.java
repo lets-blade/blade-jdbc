@@ -12,7 +12,7 @@ import blade.jdbc.ds.DataSourceFactory;
 
 public class BaseTest {
 
-	private DataSource testDefaultPool() {
+	protected DataSource testDefaultPool() {
 		try {
 			return DataSourceFactory.createDataSource("jdbc.properties");
 		} catch (Exception ex) {
@@ -21,7 +21,7 @@ public class BaseTest {
 		return null;
 	}
 	
-	private DataSource testHikariPool() {
+	protected DataSource testHikariPool() {
 		HikariConfig config = new HikariConfig();
 		config.setMaximumPoolSize(100);
 		config.setDataSourceClassName("com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
@@ -33,7 +33,7 @@ public class BaseTest {
 		return new HikariDataSource(config);
 	}
 
-	private DataSource testDruidPool() {
+	protected DataSource testDruidPool() {
 		try {
 			InputStream in = BaseTest.class.getClassLoader().getResourceAsStream("druid.properties");
 			Properties props = new Properties();

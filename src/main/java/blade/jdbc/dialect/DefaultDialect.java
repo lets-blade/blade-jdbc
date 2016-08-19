@@ -15,7 +15,7 @@ import blade.jdbc.exception.DBException;
  * Produces ANSI-standard SQL. Extend this class to handle different flavors of sql.
  */
 public class DefaultDialect implements Dialect {
-
+	
 	private static ConcurrentHashMap<Class<?>, ModelMeta> map = new ConcurrentHashMap<Class<?>, ModelMeta>();
 	
 	public ModelMeta getModelInfo(Class<?> rowClass) {
@@ -104,8 +104,6 @@ public class DefaultDialect implements Dialect {
 		modelMeta.updateSql = buf.toString();
 	}
 	
-
-	
 	public void makeInsertSql(ModelMeta modelMeta) {
 		ArrayList<String> cols = new ArrayList<String>();
 		
@@ -149,6 +147,47 @@ public class DefaultDialect implements Dialect {
 	}
 	
 	@Override
+	public String getPKSql(Query query, Class<?> rowClass) {
+		ModelMeta modelMeta = getModelInfo(rowClass);
+		String table = query.getTable();
+		if (table == null) {
+			table = modelMeta.table;
+		}
+		StringBuilder out = new StringBuilder();
+		out.append("select ");
+		out.append(modelMeta.primaryKeyName);
+		out.append(" from ");
+		out.append(table);
+		String whereAndOrderby = whereAndOrderBy(query);
+		if(whereAndOrderby.length() > 0){
+			out.append(whereAndOrderby);
+		}
+		return out.toString();
+	}
+	
+	@Override
+	public String getSelectByPKSql(Class<?> rowClass) {
+		// unlike insert and update, this needs to be done dynamically
+		// and can't be precalculated because of the where and order by
+		ModelMeta modelMeta = getModelInfo(rowClass);
+		String columns = modelMeta.selectColumns;
+		
+		String table = modelMeta.getTable();
+		if (table == null) {
+			table = modelMeta.table;
+		}
+		StringBuilder out = new StringBuilder();
+		out.append("select ");
+		out.append(columns);
+		out.append(" from ");
+		out.append(table);
+		out.append(" where ");
+		out.append(modelMeta.primaryKeyName);
+		out.append(" = ?");
+		return out.toString();
+	}
+	
+	@Override
 	public String getSelectSql(Query query, Class<?> rowClass) {
 
 		// unlike insert and update, this needs to be done dynamically
@@ -157,30 +196,23 @@ public class DefaultDialect implements Dialect {
 		ModelMeta modelMeta = getModelInfo(rowClass);
 		String columns = modelMeta.selectColumns;
 		
-		String where = query.getWhere();
 		String table = query.getTable();
 		if (table == null) {
 			table = modelMeta.table;
 		}
-		String orderBy = query.getOrderBy();
 		
 		StringBuilder out = new StringBuilder();
-		out.append("select ");
-		out.append(columns);
-		out.append(" from ");
-		out.append(table);
-		if (where != null && where.length() > 0) {
-			out.append(" where ");
-			if(where.startsWith(" and ")){
-				out.append(where.replaceFirst(" and ", ""));
-			} else{
-				out.append(where);
-			}
-			
+		if(Util.blank(query.sql())){
+			out.append("select ");
+			out.append(columns);
+			out.append(" from ");
+			out.append(table);
+		} else{
+			out.append(query.sql());
 		}
-		if (orderBy != null && orderBy.length() > 0) {
-			out.append(" order by ");
-			out.append(orderBy);
+		String whereAndOrderby = whereAndOrderBy(query);
+		if(whereAndOrderby.length() > 0){
+			out.append(whereAndOrderby);
 		}
 		return out.toString();
 	}
@@ -191,18 +223,31 @@ public class DefaultDialect implements Dialect {
 		// unlike insert and update, this needs to be done dynamically
 		// and can't be precalculated because of the where and order by
 		ModelMeta modelMeta = getModelInfo(rowClass);
-		
-		String where = query.getWhere();
 		String table = query.getTable();
 		if (table == null) {
 			table = modelMeta.table;
 		}
 		
-		String orderBy = query.getOrderBy();
-		
 		StringBuilder out = new StringBuilder();
-		out.append("select count("+ modelMeta.primaryKeyName +") from ");
-		out.append(table);
+		if(Util.blank(query.sql())){
+			out.append("select count(");
+			out.append(modelMeta.primaryKeyName);
+			out.append(") from ");
+			out.append(table);
+		} else{
+			out.append(query.sql());
+		}
+		String whereAndOrderby = whereAndOrderBy(query);
+		if(whereAndOrderby.length() > 0){
+			out.append(whereAndOrderby);
+		}
+		return out.toString();
+	}
+	
+	private String whereAndOrderBy(Query query){
+		String where = query.getWhere();
+		String orderBy = query.getOrderBy();
+		StringBuilder out = new StringBuilder();
 		if (where != null && where.length() > 0) {
 			out.append(" where ");
 			if(where.startsWith(" and ")){

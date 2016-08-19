@@ -43,7 +43,13 @@ public @interface Table {
      * <p> Defaults to the default schema for user.
      */
     String schema() default "";
-
+    
+    /**
+     * open the table query cache
+     * @return
+     */
+    boolean cached() default true;
+    
     /**
      * (Optional) Unique constraints that are to be placed on 
      * the table. These are only used if table generation is in 

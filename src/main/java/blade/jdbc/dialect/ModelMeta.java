@@ -49,29 +49,28 @@ public class ModelMeta implements ModelInfo {
 	int updateSqlArgCount;
 
 	String selectColumns;
+	
+	private boolean cached = true;
 
 	public ModelMeta(Class<?> clazz) {
-
 		try {
-
 			if (Map.class.isAssignableFrom(clazz)) {
 				// leave properties empty
 			} else {
 				populateProperties(clazz);
 			}
-
 			Table annot = (Table) clazz.getAnnotation(Table.class);
 			if (annot != null) {
 				table = annot.name();
+				cached = annot.cached();
 			} else {
 				table = clazz.getSimpleName();
 			}
-
 		} catch (Throwable t) {
 			throw new DBException(t);
 		}
 	}
-
+	
 	private void populateProperties(Class<?> clazz)
 			throws IntrospectionException, InstantiationException, IllegalAccessException {
 
@@ -316,6 +315,11 @@ public class ModelMeta implements ModelInfo {
 
 	public String getSelectColumns() {
 		return selectColumns;
+	}
+
+	@Override
+	public boolean isCached() {
+		return this.cached;
 	}
 
 }
