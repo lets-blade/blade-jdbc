@@ -9,7 +9,7 @@
 	
 	<name>blade-jdbc</name>
 	<url>https://github.com/bladejava/blade-jdbc</url>
-
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j-api.version>1.7.21</slf4j-api.version>
@@ -25,9 +25,9 @@
 	<dependencies>
 		
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j-api.version}</version>
+		    <groupId>org.slf4j</groupId>
+		    <artifactId>slf4j-api</artifactId>
+		    <version>${slf4j-api.version}</version>
 		</dependency>
 		
 		<dependency>
