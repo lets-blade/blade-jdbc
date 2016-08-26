@@ -433,7 +433,7 @@ public class Query {
 			if (null != argList && !argList.isEmpty()) {
 				Object[] args = argList.toArray();
 				int marks = Util.getSqlMarks(querySql);
-				for (int i = 0, len = args.length; len == marks && i < len; i++) {
+				for (int i = 0; i < marks; i++) {
 					state.setObject(i + 1, args[i]);
 				}
 				LOGGER.debug("Parameters\t=> {}", Arrays.toString(args));

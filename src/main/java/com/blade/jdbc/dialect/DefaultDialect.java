@@ -233,17 +233,12 @@ public class DefaultDialect implements Dialect {
 
 	@Override
 	public String getCountSql(Query query, Class<?> rowClass) {
-
-		// unlike insert and update, this needs to be done dynamically
-		// and can't be precalculated because of the where and order by
 		ModelMeta modelMeta = getModelInfo(rowClass);
 		String table = query.getTable();
 		if (table == null) {
 			table = modelMeta.table;
 		}
-
 		String countColumn = null != modelMeta.primaryKeyName ? modelMeta.primaryKeyName : "1";
-
 		StringBuilder out = new StringBuilder();
 		if (Util.blank(query.sql())) {
 			out.append("select count(");
@@ -254,7 +249,6 @@ public class DefaultDialect implements Dialect {
 			out.append(query.sql());
 		}
 		String whereSql = this.getWhereSql(query);
-		String orderSql = this.getOrderBySql(query);
 		if (whereSql.length() > 0) {
 			out.append(whereSql);
 		}
