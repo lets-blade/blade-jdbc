@@ -9,8 +9,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.blade.jdbc.exception.InternalException;
-
 public class ConnectionsAccess {
 	
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionsAccess.class);
@@ -31,15 +29,15 @@ public class ConnectionsAccess {
     }
     
     static void attach(String dbName, Connection connection, String extraInfo) {
-        if(ConnectionsAccess.getConnectionMap().get(dbName) != null){
-            throw new InternalException("You are opening a connection " + dbName + " without closing a previous one. Check your logic. Connection still remains on thread: " + ConnectionsAccess.getConnectionMap().get(dbName));
-        }
+//        if(ConnectionsAccess.getConnectionMap().get(dbName) != null){
+//            throw new InternalException("You are opening a connection " + dbName + " without closing a previous one. Check your logic. Connection still remains on thread: " + ConnectionsAccess.getConnectionMap().get(dbName));
+//        }
         ConnectionsAccess.getConnectionMap().put(dbName, connection);
-        LOGGER.debug("Attached connection: {} named [{}] to current thread. Extra info: {}", connection, dbName, extraInfo);
+//        LOGGER.debug("Attached connection: {} named [{}] to current thread. Extra info: {}", connection, dbName, extraInfo);
     }
     
     static void detach(String dbName){
-    	LOGGER.debug("Detached connection: {} from current thread", dbName);
+//    	LOGGER.debug("Detached connection: {} from current thread", dbName);
         getConnectionMap().remove(dbName);
     }
     

@@ -31,7 +31,7 @@ public class Query {
 	private StringBuffer where = new StringBuffer();
 	private String orderBy;
 	
-	private List<Object> argList = new ArrayList<Object>();
+	private List<Object> argList = new ArrayList<Object>(10);
 
 	private int rowsAffected;
 
@@ -57,7 +57,7 @@ public class Query {
 		}
 		return db.enableCache && this.cached;
 	}
-	
+		
 	public Query cached(boolean cached){
 		if(!db.enableCache && cached){
 			this.cached = false;
@@ -104,7 +104,9 @@ public class Query {
 	}
 
 	public Query eq(String key, Object value) {
-		this.where(key + " = ?", value);
+		if(null != key && null != value){
+			this.where(key + " = ?", value);
+		}
 		return this;
 	}
 
@@ -132,7 +134,7 @@ public class Query {
 	
 	public Query sql(String sql, Object... args) {
 		this.sql = sql;
-		this.argList = Arrays.asList(args);
+		this.argList.addAll(Arrays.asList(args));
 		return this;
 	}
 
@@ -169,7 +171,7 @@ public class Query {
 				if(null == cacheField){
 					cacheField = getCacheField();
 				}
-				Object value = Base.CACHE.hget(cacheKey, cacheField);
+				Object value = db.cache.hget(cacheKey, cacheField);
 				if(null != value){
 					LOGGER.debug("缓存命中：key = [{}], field = [{}]", cacheKey, cacheField);
 					return (T) value;
@@ -222,9 +224,9 @@ public class Query {
 			}
 			if(this.isCache(clazz) && null != result){
 				LOGGER.debug("缓存设置：key = [{}], field = [{}]", cacheKey, cacheField);
-				Base.CACHE.hset(cacheKey, cacheField, result, Const.CACHE_EXPIRE_TIME);
+				db.cache.hset(cacheKey, cacheField, result, Const.CACHE_EXPIRE_TIME);
 			}
-			LOGGER.debug("Total\t\t<= {}", result == null ? 0 : 1);
+			LOGGER.debug("Total\t<= {}", result == null ? 0 : 1);
 			
 			return result;
 		} catch (InstantiationException e) {
@@ -234,6 +236,7 @@ public class Query {
 		} catch (SQLException e) {
 			throw new DBException(e);
 		} finally {
+			ConnectionsAccess.detach(db.name());
 			Util.closeQuietly(state);
 			Util.closeQuietly(con);
 		}
@@ -249,16 +252,17 @@ public class Query {
 		return this.first(clazz);
 	}
 	
-	public <T> Long count(Class<T> clazz){
+	public <T> long count(Class<T> clazz){
 		
-		Long count = 0L;
+		long count = 0;
 		
 		Connection con = null;
 		PreparedStatement state = null;
 		
 		try {
+			
 			String querySql = dialect.getCountSql(this, clazz);
-
+			
 			/**
 			 * if enabled cache
 			 */
@@ -269,7 +273,7 @@ public class Query {
 				if(null == cacheField){
 					cacheField = getCacheField();
 				}
-				Object value = Base.CACHE.hget(cacheKey, cacheField);
+				Object value = db.cache.hget(cacheKey, cacheField);
 				if(null != value){
 					LOGGER.debug("缓存命中：key = [{}], field = [{}]", cacheKey, cacheField);
 					return (Long) value;
@@ -298,16 +302,17 @@ public class Query {
 			if(rs.next()){
 				count = rs.getLong(1);
 			}
-			LOGGER.debug("Total\t\t<= {}", count);
+			LOGGER.debug("Total\t<= {}", count);
 			
 			if(this.isCache(clazz)){
 				LOGGER.debug("缓存设置：key = [{}], field = [{}]", cacheKey, cacheField);
-				Base.CACHE.hset(cacheKey, cacheField, count, Const.CACHE_EXPIRE_TIME);
+				db.cache.hset(cacheKey, cacheField, count, Const.CACHE_EXPIRE_TIME);
 			}
 			
 		} catch (SQLException e) {
 			throw new DBException(e);
 		} finally {
+			ConnectionsAccess.detach(db.name());
 			Util.closeQuietly(state);
 			Util.closeQuietly(con);
 		}
@@ -358,6 +363,7 @@ public class Query {
 		} catch (IllegalArgumentException e) {
 			throw new DBException(e);
 		} finally {
+			ConnectionsAccess.detach(db.name());
 			Util.closeQuietly(state);
 			Util.closeQuietly(con);
 		}
@@ -367,12 +373,13 @@ public class Query {
 	public <T> Pager<T> page(int page, int limit, Class<T> clazz) {
 		
 		// query count
-		Long total = this.count(clazz);
+		long total = this.count(clazz);
 		Pager<T> pager = new Pager<T>(total, page, limit);
 		
 		String sql = dialect.getPageSql(this, clazz);
 		
 		int offset = (pager.getPageNum() - 1) * limit;
+		
 		this.argList.add(offset);
 		this.argList.add(limit);
 		
@@ -401,7 +408,7 @@ public class Query {
 				if(null == cacheField){
 					cacheField = getCacheField();
 				}
-				Object value = Base.CACHE.hget(cacheKey, cacheField);
+				Object value = db.cache.hget(cacheKey, cacheField);
 				if(null != value){
 					LOGGER.debug("缓存命中：key = [{}], field = [{}]", cacheKey, cacheField);
 					return (List<T>) value;
@@ -423,9 +430,12 @@ public class Query {
 			state = localCon.prepareStatement(querySql);
 
 			// load args
-			Object[] args = this.loadArgs(state);
-			
-			if(null != args){
+			if (null != argList && !argList.isEmpty()) {
+				Object[] args = argList.toArray();
+				int marks = Util.getSqlMarks(querySql);
+				for (int i = 0, len = args.length; len == marks && i < len; i++) {
+					state.setObject(i + 1, args[i]);
+				}
 				LOGGER.debug("Parameters\t=> {}", Arrays.toString(args));
 			}
 			
@@ -435,15 +445,16 @@ public class Query {
 				out.add((T) colValue);
 			}
 			
-			LOGGER.debug("Total\t\t<= {}", out.size());
+			LOGGER.debug("Total\t<= {}", out.size());
 			
 			if(this.isCache(clazz)){
 				LOGGER.debug("缓存设置：key = [{}], field = [{}]", cacheKey, cacheField);
-				Base.CACHE.hset(cacheKey, cacheField, out, Const.CACHE_EXPIRE_TIME);
+				db.cache.hset(cacheKey, cacheField, out, Const.CACHE_EXPIRE_TIME);
 			}
 		} catch (SQLException e) {
 			throw new DBException(e);
 		} finally {
+			ConnectionsAccess.detach(db.name());
 			Util.closeQuietly(state);
 			Util.closeQuietly(con);
 		}
@@ -514,21 +525,19 @@ public class Query {
 					out.add((T) colValue);
 				}
 			} else {
-				ModelInfo pojoInfo = dialect.getModelInfo(clazz);
+				ModelInfo modelInfo = dialect.getModelInfo(clazz);
 				while (rs.next()) {
 					T row = clazz.newInstance();
-
 					for (int i = 1; i <= colCount; i++) {
 						String colName = meta.getColumnName(i);
 						Object colValue = rs.getObject(i);
-
-						pojoInfo.putValue(row, colName, colValue);
+						modelInfo.putValue(row, colName, colValue);
 					}
 					out.add((T) row);
 				}
 			}
 			
-			LOGGER.debug("Total\t\t<= {}", out.size());
+			LOGGER.debug("Total\t<= {}", out.size());
 			
 		} catch (InstantiationException e) {
 			throw new DBException(e);
@@ -537,6 +546,7 @@ public class Query {
 		} catch (SQLException e) {
 			throw new DBException(e);
 		} finally {
+			ConnectionsAccess.detach(db.name());
 			Util.closeQuietly(state);
 			Util.closeQuietly(con);
 		}
@@ -570,8 +580,8 @@ public class Query {
 			ModelInfo modelInfo = dialect.getModelInfo(clazz);
 			String cacheField = modelInfo.getPK(row).toString();
 			
-			Base.CACHE.del(modelInfo.getTable() + "_list");
-			Base.CACHE.del(modelInfo.getTable() + "_count");
+			db.cache.del(modelInfo.getTable() + "_list");
+			db.cache.del(modelInfo.getTable() + "_count");
 			LOGGER.debug("缓存更新：table = [{}], field = [{}]", modelInfo.getTable(), cacheField);
 		}
 		return (T) insertRow;
@@ -593,8 +603,8 @@ public class Query {
 			String cacheKey = modelInfo.getTable() + "_rows";
 			String cacheField = modelInfo.getPK(row).toString();
 			
-			Base.CACHE.del(modelInfo.getTable() + "_count");
-			Base.CACHE.hdel(modelInfo.getTable() + "_rows", modelInfo.getPK(row).toString());
+			db.cache.del(modelInfo.getTable() + "_count");
+			db.cache.hdel(modelInfo.getTable() + "_rows", modelInfo.getPK(row).toString());
 			LOGGER.debug("缓存更新：key = [{}], field = [{}]", cacheKey, cacheField);
 		}
 		return this;
@@ -609,6 +619,10 @@ public class Query {
 		argList = Arrays.asList(dialect.getUpsertArgs(this, row));
 		this.execute(commit);
 		return this;
+	}
+	
+	public Query execute() {
+		return this.execute(true);
 	}
 	
 	public Query execute(boolean commit) {
@@ -653,6 +667,7 @@ public class Query {
 			throw new DBException(e);
 		} finally {
 			if (commit) {
+				ConnectionsAccess.detach(db.name());
 				Util.closeQuietly(state);
 				Util.closeQuietly(con);
 			}
@@ -692,9 +707,9 @@ public class Query {
 			ModelInfo modelInfo = dialect.getModelInfo(clazz);
 			String cacheKey = modelInfo.getTable() + "_rows";
 			String cacheField = modelInfo.getPK(row).toString();
-			Base.CACHE.hdel(cacheKey, modelInfo.getPK(row).toString());
-			Base.CACHE.del(modelInfo.getTable() + "_list");
-			Base.CACHE.del(modelInfo.getTable() + "_count");
+			db.cache.hdel(cacheKey, modelInfo.getPK(row).toString());
+			db.cache.del(modelInfo.getTable() + "_list");
+			db.cache.del(modelInfo.getTable() + "_count");
 			LOGGER.debug("缓存更新：key = [{}], field = [{}]", cacheKey, cacheField);
 		}
 		return this;
@@ -716,7 +731,7 @@ public class Query {
 		this.execute(commit);
 		
 		if(isCache(null)){
-			Base.CACHE.clean();
+			db.cache.clean();
 			LOGGER.debug("清空缓存");
 		}
 		return this;

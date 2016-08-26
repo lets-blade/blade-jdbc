@@ -219,4 +219,12 @@ public class Util {
             if (autoCloseable != null) { autoCloseable.close(); }
         } catch (Exception ignore) {}
     }
+
+	public static int getSqlMarks(String querySql) {
+		if(querySql.indexOf("?") == -1){
+			return 0;
+		}
+		return querySql.split("\\?").length;
+	}
+	
 }

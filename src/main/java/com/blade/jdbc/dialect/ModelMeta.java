@@ -9,8 +9,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.blade.jdbc.annotation.Column;
 import com.blade.jdbc.annotation.EnumType;
@@ -27,6 +33,8 @@ import com.blade.jdbc.serialize.DbSerializer;
  */
 public class ModelMeta implements ModelInfo {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(ModelMeta.class);
+	
 	/*
 	 * annotations recognized: @ Id, @ GeneratedValue @ Transient @ Table @
 	 * Column @ DbSerializer @ Enumerated
@@ -73,28 +81,28 @@ public class ModelMeta implements ModelInfo {
 	
 	private void populateProperties(Class<?> clazz)
 			throws IntrospectionException, InstantiationException, IllegalAccessException {
-
-		Field[] fields = clazz.getDeclaredFields();
-		// Field[] fields = clazz.getFields();
-
+		
+		List<Field> fields = new ArrayList<Field>();
+		fields.addAll(Arrays.asList(clazz.getFields()));
+		if(null != clazz.getSuperclass() && clazz.getSuperclass() != Object.class){
+			fields.addAll(Arrays.asList(clazz.getSuperclass().getFields()));
+		}
+		
 		for (Field field : fields) {
-
 			int modifiers = field.getModifiers();
+			if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers)) {
+				continue;
+			}
+			if (field.getAnnotation(Transient.class) != null) {
+				continue;
+			}
+			
 			if (Modifier.isPrivate(modifiers) || Modifier.isPublic(modifiers)) {
-				if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers)) {
-					continue;
-				}
-				if (field.getAnnotation(Transient.class) != null) {
-					continue;
-				}
-
 				Property prop = new Property();
 				prop.name = field.getName();
 				prop.field = field;
 				prop.dataType = field.getType();
-
 				applyAnnotations(prop, field);
-
 				propertyMap.put(prop.name, prop);
 			}
 		}
@@ -224,49 +232,44 @@ public class ModelMeta implements ModelInfo {
 	}
 
 	public void putValue(Object row, String name, Object value) {
-
 		Property prop = propertyMap.get(name);
-		if (prop == null) {
-			throw new DBException("No such field: " + name);
-		}
+		if (prop != null) {
+			if (value != null) {
+				if (prop.serializer != null) {
+					value = prop.serializer.deserialize((String) value, prop.dataType);
+				} else if (prop.isEnumField) {
+					value = getEnumConst(prop.enumClass, prop.enumType, value);
+				}
+			}
+			if (prop.writeMethod != null) {
+				try {
+					prop.writeMethod.invoke(row, value);
+				} catch (IllegalAccessException e) {
+					throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
+							+ prop.writeMethod.toString() + " value: " + value, e);
+				} catch (IllegalArgumentException e) {
+					throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
+							+ prop.writeMethod.toString() + " value: " + value, e);
+				} catch (InvocationTargetException e) {
+					throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
+							+ prop.writeMethod.toString() + " value: " + value, e);
+				}
+				return;
+			}
 
-		if (value != null) {
-			if (prop.serializer != null) {
-				value = prop.serializer.deserialize((String) value, prop.dataType);
-			} else if (prop.isEnumField) {
-				value = getEnumConst(prop.enumClass, prop.enumType, value);
+			if (prop.field != null) {
+				try {
+					prop.field.set(row, value);
+				} catch (IllegalArgumentException e) {
+					throw new DBException(
+							"Could not set value into row. Field: " + prop.field.toString() + " value: " + value, e);
+				} catch (IllegalAccessException e) {
+					throw new DBException(
+							"Could not set value into row. Field: " + prop.field.toString() + " value: " + value, e);
+				}
+				return;
 			}
 		}
-
-		if (prop.writeMethod != null) {
-			try {
-				prop.writeMethod.invoke(row, value);
-			} catch (IllegalAccessException e) {
-				throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
-						+ prop.writeMethod.toString() + " value: " + value, e);
-			} catch (IllegalArgumentException e) {
-				throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
-						+ prop.writeMethod.toString() + " value: " + value, e);
-			} catch (InvocationTargetException e) {
-				throw new DBException("Could not write value into row. Property: " + prop.name + " method: "
-						+ prop.writeMethod.toString() + " value: " + value, e);
-			}
-			return;
-		}
-
-		if (prop.field != null) {
-			try {
-				prop.field.set(row, value);
-			} catch (IllegalArgumentException e) {
-				throw new DBException(
-						"Could not set value into row. Field: " + prop.field.toString() + " value: " + value, e);
-			} catch (IllegalAccessException e) {
-				throw new DBException(
-						"Could not set value into row. Field: " + prop.field.toString() + " value: " + value, e);
-			}
-			return;
-		}
-
 	}
 
 	/**

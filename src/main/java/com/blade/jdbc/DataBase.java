@@ -214,19 +214,22 @@ public class DataBase {
 	 */
 	public Connection getConnection() {
 		Connection connection = ConnectionsAccess.getConnection(name);
-		
-		if(null == connection){
-			if (datasource == null) {
-				datasource = DataSourceManager.getDataSource();
-			}
-			if(null != datasource){
-				try {
-					connection = datasource.getConnection();
-					ConnectionsAccess.attach(name, connection, null);
-				} catch (SQLException e) {
-					throw new DBException(e);
+		try {
+			if(null == connection || connection.isClosed()){
+				if (datasource == null) {
+					datasource = DataSourceManager.getDataSource();
+				}
+				if(null != datasource){
+					try {
+						connection = datasource.getConnection();
+						ConnectionsAccess.attach(name, connection, null);
+					} catch (SQLException e) {
+						throw new DBException(e);
+					}
 				}
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		
 		if (connection == null) {
@@ -316,12 +319,24 @@ public class DataBase {
 	}
 
 	/**
+	 * execute sql
+	 * @return
+	 */
+	public Query execute() {
+		return new Query(this).execute(true);
+	}
+	
+	/**
 	 * Create a query and specify which table it operates on.
 	 */
 	public Query table(String table) {
 		return new Query(this).table(table);
 	}
-
+	
+	public Query cached(boolean cached) {
+		return new Query(this).cached(cached);
+	}
+	
 	/**
 	 * Start a database transaction. Pass the transaction object to each query
 	 * or command that should be part of the transaction using the
@@ -379,6 +394,7 @@ public class DataBase {
 	
 	public DataBase enableCache(Cache cache) {
 		this.cache = cache;
+		this.enableCache = true;
 		return this;
 	}
 	
