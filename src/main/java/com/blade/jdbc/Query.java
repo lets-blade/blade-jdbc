@@ -345,7 +345,7 @@ public class Query {
 
 			ResultSetMetaData meta = rs.getMetaData();
 			int colCount = meta.getColumnCount();
-
+			
 			while (rs.next()) {
 				Map<String, Object> map = clazz.newInstance();
 				for (int i = 1; i <= colCount; i++) {
