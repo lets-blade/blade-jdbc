@@ -68,6 +68,9 @@ public class ModelMeta implements ModelInfo {
 				populateProperties(clazz);
 			}
 			Table annot = (Table) clazz.getAnnotation(Table.class);
+			if(null == annot){
+				annot = (Table) clazz.getSuperclass().getAnnotation(Table.class);
+			}
 			if (annot != null) {
 				table = annot.name();
 				cached = annot.cached();
