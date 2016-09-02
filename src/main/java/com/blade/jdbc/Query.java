@@ -215,7 +215,7 @@ public class Query {
 				if (rs.next()) {
 					T row = clazz.newInstance();
 					for (int i = 1; i <= colCount; i++) {
-						String colName = meta.getColumnName(i);
+						String colName = meta.getColumnLabel(i);
 						Object colValue = rs.getObject(i);
 						pojoInfo.putValue(row, colName, colValue);
 					}
@@ -349,7 +349,7 @@ public class Query {
 			while (rs.next()) {
 				Map<String, Object> map = clazz.newInstance();
 				for (int i = 1; i <= colCount; i++) {
-					String colName = meta.getColumnName(i);
+					String colName = meta.getColumnLabel(i);
 					map.put(colName, rs.getObject(i));
 				}
 				out.add(map);
@@ -529,7 +529,7 @@ public class Query {
 				while (rs.next()) {
 					T row = clazz.newInstance();
 					for (int i = 1; i <= colCount; i++) {
-						String colName = meta.getColumnName(i);
+						String colName = meta.getColumnLabel(i);
 						Object colValue = rs.getObject(i);
 						modelInfo.putValue(row, colName, colValue);
 					}
