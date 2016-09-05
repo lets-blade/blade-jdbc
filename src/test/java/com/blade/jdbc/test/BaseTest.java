@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import org.junit.Before;
 
 import com.alibaba.druid.pool.DruidDataSourceFactory;
+import com.blade.jdbc.Base;
 import com.blade.jdbc.ds.DataSourceFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -46,10 +47,11 @@ public class BaseTest {
 		}
 		return null;
 	}
-
+	
 	@Before
 	public void before() {
-//		db = Base.open(testDefaultPool());
+//		Base.open("jdbc:mysql://localhost:3306/demo", "root", "root");
+		Base.open(testDefaultPool());
 	}
 
 }

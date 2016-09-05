@@ -3,24 +3,13 @@ package com.blade.jdbc.test;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.sql2o.Sql2o;
 
-import com.blade.jdbc.Model;
 import com.blade.jdbc.Paginator;
 import com.blade.jdbc.model.Person;
 import com.blade.jdbc.tx.AtomTx;
 
-public class CRUDTest {
-
-	Sql2o sql2o = null;
-	
-	@Before
-	public void before() {
-		sql2o = new Sql2o("jdbc:mysql://localhost:3306/demo", "root", "root");
-		Model.sql2o = sql2o;
-	}
+public class CRUDTest extends BaseTest {
 	
 	@Test
 	public void testInsert() {

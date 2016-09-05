@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sql2o.Connection;
 import org.sql2o.Query;
-import org.sql2o.Sql2o;
 
 import com.blade.jdbc.annotation.Table;
 import com.blade.jdbc.dialect.DefaultDialect;
@@ -31,8 +30,6 @@ public class Model extends HashMap<String, Object> {
 
 	private Class<? extends Model> clazz;
 
-	public static Sql2o sql2o;
-	
 	private Connection connection;
 	
 	private Query query;
@@ -109,7 +106,7 @@ public class Model extends HashMap<String, Object> {
 		}
 		
 		if(null == this.connection){
-			this.connection = sql2o.open();
+			this.connection = Base.sql2o.open();
 		}
 		
 		this.query = connection.createQuery(sql);
@@ -124,7 +121,7 @@ public class Model extends HashMap<String, Object> {
 	public void addToBatch(){
 		if(null == query){
 			String sql = dialect.getSaveSql(this);
-			query = sql2o.beginTransaction().createQuery(sql);
+			query = Base.sql2o.beginTransaction().createQuery(sql);
 		}
 		Collection<Object> vlaues = this.values();
 		Object[] paramValues = vlaues.toArray(new Object[vlaues.size()]);
@@ -163,7 +160,7 @@ public class Model extends HashMap<String, Object> {
 		}
 		
 		if(null == this.connection){
-			this.connection = sql2o.open();
+			this.connection = Base.sql2o.open();
 		}
 		Query query = this.connection.createQuery(sql);
 		List<Object> vlaues = new ArrayList<Object>(this.values());
@@ -187,7 +184,7 @@ public class Model extends HashMap<String, Object> {
 		}
 		
 		if(null == this.connection){
-			this.connection = sql2o.open();
+			this.connection = Base.sql2o.open();
 		}
 		Query query = this.connection.createQuery(sql);
 		
@@ -204,7 +201,7 @@ public class Model extends HashMap<String, Object> {
 	}
 	
 	public void tx(AtomTx atomTx){
-		this.connection = sql2o.beginTransaction();
+		this.connection = Base.sql2o.beginTransaction();
 		try {
 			atomTx.execute();
 			this.connection.commit();
@@ -236,7 +233,7 @@ public class Model extends HashMap<String, Object> {
 		
 		LOGGER.debug("Preparing\t=> {}", querySql);
 		
-		Query query = sql2o.open().createQuery(querySql);
+		Query query = Base.sql2o.open().createQuery(querySql);
 		
 		if (!this.params.isEmpty()) {
 			Object[] paramValues = this.params.values().toArray();
@@ -274,7 +271,7 @@ public class Model extends HashMap<String, Object> {
 	public <T extends Model> T findOne() {
 		String sql = dialect.getQueryOneSql(this.sql, this);
 		LOGGER.debug("Preparing\t=> {}", sql);
-		Query query = sql2o.open().createQuery(sql);
+		Query query = Base.sql2o.open().createQuery(sql);
 		
 		if (!this.params.isEmpty()) {
 			Object[] paramValues = this.params.values().toArray();
@@ -292,7 +289,7 @@ public class Model extends HashMap<String, Object> {
 	public int count(){
 		String sql = dialect.getQueryCountSql(this.sql, this);
 		LOGGER.debug("Preparing\t=> {}", sql);
-		Query query = sql2o.open().createQuery(sql);
+		Query query = Base.sql2o.open().createQuery(sql);
 		
 		if (!this.params.isEmpty()) {
 			Object[] paramValues = this.params.values().toArray();
