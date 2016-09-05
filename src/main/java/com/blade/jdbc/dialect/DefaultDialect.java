@@ -1,464 +1,136 @@
 package com.blade.jdbc.dialect;
 
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Set;
 
-import com.blade.jdbc.Query;
-import com.blade.jdbc.Util;
-import com.blade.jdbc.annotation.Column;
-import com.blade.jdbc.exception.DBException;
+import com.blade.jdbc.Model;
+import com.blade.jdbc.ParamKey;
 
-/**
- * Produces ANSI-standard SQL. Extend this class to handle different flavors of
- * sql.
- */
 public class DefaultDialect implements Dialect {
 
-	private static ConcurrentHashMap<Class<?>, ModelMeta> map = new ConcurrentHashMap<Class<?>, ModelMeta>();
-
-	public ModelMeta getModelInfo(Class<?> rowClass) {
-		ModelMeta pi = map.get(rowClass);
-		if (pi == null) {
-			pi = new ModelMeta(rowClass);
-			map.put(rowClass, pi);
-
-			makeInsertSql(pi);
-			makeUpsertSql(pi);
-			makeUpdateSql(pi, null);
-			makeSelectColumns(pi);
-		}
-		return pi;
-	}
-
-	public ModelMeta getModelInfo(Class<?> rowClass, Object row) {
-		ModelMeta pi = map.get(rowClass);
-		if (pi == null) {
-			pi = new ModelMeta(rowClass);
-			map.put(rowClass, pi);
-
-			makeInsertSql(pi);
-			makeUpdateSql(pi, row);
-			makeSelectColumns(pi);
-		}
-		return pi;
-	}
-
+	/**
+	 * insert into person (id, name, age) values(?, ?, ?)
+	 */
 	@Override
-	public String getInsertSql(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass());
-		return modelMeta.insertSql;
-	}
+	public String getSaveSql(Model model) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("insert into ").append(model.table()).append('(');
 
-	@Override
-	public Object[] getInsertArgs(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass());
-		Object[] args = new Object[modelMeta.insertSqlArgCount];
-		for (int i = 0; i < modelMeta.insertSqlArgCount; i++) {
-			args[i] = modelMeta.getValue(row, modelMeta.insertColumnNames[i]);
-		}
-		return args;
-	}
-
-	@Override
-	public String getUpdateSql(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass());
-		if (modelMeta.primaryKeyName == null) {
-			throw new DBException("No primary key specified in the row. Use the @Id annotation.");
-		}
-		return modelMeta.updateSql;
-	}
-
-	@Override
-	public String getUpdateByPKSql(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass(), row);
-		if (modelMeta.primaryKeyName == null) {
-			throw new DBException("No primary key specified in the row. Use the @Id annotation.");
-		}
-		return modelMeta.updateSql;
-	}
-
-	@Override
-	public Object[] getUpdateArgs(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass());
-
-		Object[] args = new Object[modelMeta.updateSqlArgCount];
-		for (int i = 0; i < modelMeta.updateSqlArgCount - 1; i++) {
-			args[i] = modelMeta.getValue(row, modelMeta.updateColumnNames[i]);
-		}
-		// add the value for the where clause to the end
-		Object pk = modelMeta.getValue(row, modelMeta.primaryKeyName);
-		args[modelMeta.updateSqlArgCount - 1] = pk;
-		return args;
-	}
-
-	public void makeUpsertSql(ModelMeta modelMeta) {
-	}
-
-	public void makeUpdateSql(ModelMeta modelMeta, Object row) {
-		ArrayList<String> cols = new ArrayList<String>();
-		for (Property prop : modelMeta.propertyMap.values()) {
-			if (prop.isPrimaryKey || prop.isGenerated) {
-				continue;
-			}
-			if (null != row) {
-				Object value = modelMeta.getValue(row, prop.name);
-				if (null != value) {
-					cols.add(prop.name);
-				}
+		Set<String> columns = model.keySet();
+		int pos = 0, len = columns.size();
+		for (String column : columns) {
+			if (pos != (len - 1)) {
+				sql.append(column + ',');
 			} else {
-				cols.add(prop.name);
+				sql.append(column);
 			}
+			pos++;
 		}
-
-		modelMeta.updateColumnNames = cols.toArray(new String[cols.size()]);
-		modelMeta.updateSqlArgCount = modelMeta.updateColumnNames.length + 1; // +
-																				// 1
-																				// for
-																				// the
-																				// where
-																				// arg
-
-		StringBuilder buf = new StringBuilder();
-		buf.append("update ");
-		buf.append(modelMeta.table);
-		buf.append(" set ");
-
-		for (int i = 0; i < cols.size(); i++) {
-			if (i > 0) {
-				buf.append(',');
-			}
-			buf.append(cols.get(i) + " = ?");
-		}
-
-		buf.append(" where " + modelMeta.primaryKeyName + " = ?");
-
-		modelMeta.updateSql = buf.toString();
-	}
-
-	public void makeInsertSql(ModelMeta modelMeta) {
-		ArrayList<String> cols = new ArrayList<String>();
-
-		Collection<Property> properties = modelMeta.propertyMap.values();
-
-		for (Property prop : properties) {
-			if (prop.isGenerated) {
-				continue;
-			}
-			cols.add(prop.name);
-		}
-		modelMeta.insertColumnNames = cols.toArray(new String[cols.size()]);
-		modelMeta.insertSqlArgCount = modelMeta.insertColumnNames.length;
-
-		StringBuilder buf = new StringBuilder();
-		buf.append("insert into ");
-		buf.append(modelMeta.table);
-		buf.append(" (");
-		buf.append(Util.join(modelMeta.insertColumnNames)); // comma sep list?
-		buf.append(") values (");
-		buf.append(Util.getQuestionMarks(modelMeta.insertSqlArgCount));
-		buf.append(")");
-
-		modelMeta.insertSql = buf.toString();
-	}
-
-	private void makeSelectColumns(ModelMeta modelMeta) {
-		if (modelMeta.propertyMap.isEmpty()) {
-			// this applies if the rowClass is a Map
-			modelMeta.selectColumns = "*";
-		} else {
-			ArrayList<String> cols = new ArrayList<String>();
-			for (Property prop : modelMeta.propertyMap.values()) {
-				cols.add(prop.name);
-			}
-			modelMeta.selectColumns = Util.join(cols);
-		}
-	}
-
-	@Override
-	public String getPKSql(Query query, Class<?> rowClass) {
-		ModelMeta modelMeta = getModelInfo(rowClass);
-		String table = query.getTable();
-		if (table == null) {
-			table = modelMeta.table;
-		}
-		StringBuilder out = new StringBuilder();
-		String columns = modelMeta.primaryKeyName;
-		out.append("select ");
-		out.append(columns);
-		out.append(" from ");
-		out.append(table);
-		String whereSql = this.getWhereSql(query);
-		if (whereSql.length() > 0) {
-			out.append(whereSql);
-		}
-		return out.toString();
-	}
-
-	@Override
-	public String getSelectSql(Query query, Class<?> rowClass) {
-
-		// unlike insert and update, this needs to be done dynamically
-		// and can't be precalculated because of the where and order by
-
-		ModelMeta modelMeta = getModelInfo(rowClass);
-		String columns = modelMeta.selectColumns;
-
-		String table = query.getTable();
-		if (table == null) {
-			table = modelMeta.table;
-		}
-
-		StringBuilder out = new StringBuilder();
-		if (Util.blank(query.sql())) {
-			out.append("select ");
-			out.append(columns);
-			out.append(" from ");
-			out.append(table);
-		} else {
-			out.append(query.sql());
-		}
-		String whereSql = this.getWhereSql(query);
-		String orderSql = this.getOrderBySql(query);
-		if (whereSql.length() > 0) {
-			out.append(whereSql);
-		}
-		if (orderSql.length() > 0) {
-			out.append(orderSql);
-		}
-		return out.toString();
-	}
-
-	@Override
-	public String getCountSql(Query query, Class<?> rowClass) {
-		ModelMeta modelMeta = getModelInfo(rowClass);
-		String table = query.getTable();
-		if (table == null) {
-			table = modelMeta.table;
-		}
-		String countColumn = null != modelMeta.primaryKeyName ? modelMeta.primaryKeyName : "1";
-		StringBuilder out = new StringBuilder();
-		if (Util.blank(query.sql())) {
-			out.append("select count(");
-			out.append(countColumn);
-			out.append(") from ");
-			out.append(table);
-		} else {
-			out.append(query.sql());
-		}
-		String whereSql = this.getWhereSql(query);
-		if (whereSql.length() > 0) {
-			out.append(whereSql);
-		}
-		return out.toString();
-	}
-
-	private String getOrderBySql(Query query) {
-		String orderBy = query.getOrderBy();
-		if (orderBy != null && orderBy.length() > 0) {
-			return " order by " + orderBy;
-		}
-		return "";
-	}
-
-	private String getWhereSql(Query query) {
-		String where = query.getWhere();
-		StringBuilder out = new StringBuilder();
-		if (where != null && where.length() > 0) {
-			out.append(" where ");
-			if (where.startsWith(" and ")) {
-				out.append(where.replaceFirst(" and ", ""));
+		sql.append(") values(");
+		for (int i = 1; i <= len; i++) {
+			if (i < len) {
+				sql.append(":p" + i + ",");
 			} else {
-				out.append(where);
+				sql.append(":p" + i);
 			}
 		}
-		return out.toString();
+		sql.append(')');
+		return sql.toString();
 	}
 
+	/**
+	 * update person set a=1, b=2 where id = 1
+	 */
 	@Override
-	public String getCreateTableSql(Class<?> clazz) {
+	public String getUpdateSql(Model model) {
 
-		StringBuilder buf = new StringBuilder();
-
-		ModelMeta modelMeta = getModelInfo(clazz);
-		buf.append("create table ");
-		buf.append(modelMeta.table);
-		buf.append(" (");
-
-		boolean needsComma = false;
-		for (Property prop : modelMeta.propertyMap.values()) {
-			if (needsComma) {
-				buf.append(',');
-			}
-			needsComma = true;
-
-			Column columnAnnot = prop.columnAnnotation;
-			if (columnAnnot == null) {
-				buf.append(prop.name);
-				buf.append(" ");
-				buf.append(getColType(prop.dataType, 255, 10, 2));
-				if (prop.isGenerated) {
-					buf.append(" auto_increment");
-				}
+		StringBuffer sql = new StringBuffer();
+		sql.append("update ").append(model.table()).append(" set ");
+		
+		Set<String> columns = model.keySet();
+		
+		int pos = 1, len = columns.size();
+		for (String column : columns) {
+			if (pos < len) {
+				sql.append(column + " = :p" + pos + ",");
 			} else {
-				if (columnAnnot.columnDefinition() == null) {
-					// let the column def override everything
-					buf.append(columnAnnot.columnDefinition());
-				} else {
-					buf.append(prop.name);
-					buf.append(" ");
-					buf.append(getColType(prop.dataType, columnAnnot.length(), columnAnnot.precision(),
-							columnAnnot.scale()));
-					if (prop.isGenerated) {
-						buf.append(" auto_increment");
-					}
-					if (columnAnnot.unique()) {
-						buf.append(" unique");
-					}
-					if (!columnAnnot.nullable()) {
-						buf.append(" not null");
-					}
-				}
+				sql.append(column + " = :p" + pos);
 			}
+			pos++;
 		}
-		if (modelMeta.primaryKeyName != null) {
-			buf.append(", primary key (");
-			buf.append(modelMeta.primaryKeyName);
-			buf.append(")");
-		}
-		buf.append(")");
-		return buf.toString();
-	}
-
-	protected String getColType(Class<?> dataType, int length, int precision, int scale) {
-		String colType;
-
-		if (dataType.equals(Integer.class) || dataType.equals(int.class)) {
-			colType = "integer";
-		} else if (dataType.equals(Long.class) || dataType.equals(long.class)) {
-			colType = "bigint";
-		} else if (dataType.equals(Double.class) || dataType.equals(double.class)) {
-			colType = "double";
-		} else if (dataType.equals(Float.class) || dataType.equals(float.class)) {
-			colType = "float";
-		} else if (dataType.equals(BigDecimal.class)) {
-			colType = "decimal(" + precision + "," + scale + ")";
-		} else {
-			colType = "varchar(" + length + ")";
-		}
-		return colType;
-	}
-
-	@Override
-	public String getDeleteSql(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass());
-		String table = query.getTable();
-		if (table == null) {
-			table = modelMeta.table;
-			if (table == null) {
-				throw new DBException("You must specify a table name");
-			}
-		}
-		String primaryKeyName = modelMeta.primaryKeyName;
-		return "delete from " + table + " where " + primaryKeyName + "=?";
-	}
-
-	@Override
-	public Object[] getDeleteArgs(Query query, Object row) {
-		ModelMeta modelMeta = getModelInfo(row.getClass());
-		Object primaryKeyValue = modelMeta.getValue(row, modelMeta.primaryKeyName);
-		Object[] args = new Object[1];
-		args[0] = primaryKeyValue;
-		return args;
+		sql.append(this.whereSql(pos + 1,model));
+		return sql.toString();
 	}
 	
 	@Override
-	public String getUpsertSql(Query query, Object row) {
-		String msg = "There's no standard upsert implemention. There is one in the MySql driver, though,"
-				+ "so if you're using MySql, call Database.setSqlMaker(new MySqlMaker()); Or roll your own.";
-		throw new UnsupportedOperationException(msg);
+	public String getDeleteSql(Model model) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("delete from ").append(model.table()).append(' ');
+		sql.append(this.whereSql(1, model));
+		return sql.toString();
+	}
+
+	@Override
+	public String getQuerySql(Model model) {
+		String sql = this.querySql(model);
+		String order = model.order();
+		if(null != order){
+			sql += " order by " + order;
+		}
+		return sql;
+	}
+	
+	private String querySql(Model model){
+		StringBuffer sql = new StringBuffer();
+		sql.append("select * from ").append(model.table()).append(' ');
+		sql.append(this.whereSql(1, model));
+		return sql.toString();
+	}
+	
+	private String whereSql(int index, Model model){
+		StringBuffer sql = new StringBuffer();
+		Map<ParamKey, Object> where = model.params();
+		if (null != where && !where.isEmpty()) {
+			sql.append("where ");
+			Set<ParamKey> whereKeys = where.keySet();
+			for (ParamKey paramKey : whereKeys) {
+				String apped = paramKey.getColumn() + " " + paramKey.getOpt().trim() + " :p" + index;
+				if (index > 1 && !"".equals(paramKey.getOpt())) {
+					sql.append(" and " + apped).append(' ');
+				} else {
+					sql.append(apped).append(' ');
+				}
+				index++;
+			}
+		}
+		return sql.toString();
+	}
+
+	@Override
+	public String getQueryOneSql(Model model) {
+		String sql = this.querySql(model);
+		sql += " limit 1";
+		return sql.toString();
 	}
 	
 	@Override
-	public Object[] getUpsertArgs(Query query, Object row) {
-		throw new UnsupportedOperationException();
+	public String getQueryCountSql(Model model) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("select count(")
+		.append(model.pkName())
+		.append(") from ")
+		.append(model.table()).append(' ')
+		.append(this.whereSql(1, model));
+		return sql.toString();
 	}
-
+	
 	@Override
-	public void populateGeneratedKey(ResultSet generatedKeys, Object insertRow) {
-		ModelInfo modelMeta = getModelInfo(insertRow.getClass());
-
-		try {
-			Property prop = modelMeta.getGeneratedColumnProperty();
-			boolean isInt = prop.dataType.isAssignableFrom(int.class) || prop.dataType.isAssignableFrom(Integer.class); // int
-																														// or
-																														// long
-
-			Object newKey;
-
-			// if there is just one column, it's the generated key
-			// postgres returns multiple columns, though, so we have the fetch
-			// the value by name
-			int colCount = generatedKeys.getMetaData().getColumnCount();
-			if (colCount == 1) {
-				if (isInt) {
-					newKey = generatedKeys.getInt(1);
-				} else {
-					newKey = generatedKeys.getLong(1);
-				}
-			} else {
-				// colcount > 1, must do by name
-				if (isInt) {
-					newKey = generatedKeys.getInt(prop.name);
-				} else {
-					newKey = generatedKeys.getLong(prop.name);
-				}
-			}
-			modelMeta.putValue(insertRow, prop.name, newKey);
-		} catch (Throwable t) {
-			throw new DBException(t);
-		}
-	}
-
-	@Override
-	public String getPageSql(Query query, Class<?> rowClass) {
-
-		ModelMeta modelMeta = getModelInfo(rowClass);
-		String columns = modelMeta.selectColumns;
-
-		String where = query.getWhere();
-		String table = query.getTable();
-		if (table == null) {
-			table = modelMeta.table;
-		}
-		String orderBy = query.getOrderBy();
-		String sql = query.sql();
-		StringBuilder out = new StringBuilder();
-		if (null != sql && sql.length() > 0) {
-			out.append(sql);
-		} else {
-			out.append("select ");
-			out.append(columns);
-			out.append(" from ");
-			out.append(table);
-		}
-		if (where != null && where.length() > 0) {
-			out.append(" where ");
-			if (where.startsWith(" and ")) {
-				out.append(where.replaceFirst(" and ", ""));
-			} else {
-				out.append(where);
-			}
-
-		}
-		if (orderBy != null && orderBy.length() > 0) {
-			out.append(" order by ");
-			out.append(orderBy);
-		}
-		out.append(" limit ?,?");
-		return out.toString();
+	public String getQueryPageSql(Model model) {
+		String sql = this.getQuerySql(model);
+		Map<ParamKey, Object> where = model.params();
+		int whereSize = where.size();
+		sql += " limit :p" + (whereSize+1) + ", :p" + (whereSize+2);
+		return sql;
 	}
 
 }

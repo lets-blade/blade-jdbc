@@ -3,135 +3,104 @@ package com.blade.jdbc.test;
 import java.util.Date;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.sql2o.Sql2o;
 
-import com.blade.jdbc.Pager;
+import com.blade.jdbc.Model;
+import com.blade.jdbc.Paginator;
 import com.blade.jdbc.model.Person;
-import com.blade.jdbc.tx.Transaction;
 
-public class CRUDTest extends BaseTest {
-
+public class CRUDTest {
+	
+	Sql2o sql2o = null;
+	
+	@Before
+	public void before(){
+		sql2o = new Sql2o("jdbc:mysql://localhost:3306/demo", "root", "root");
+		Model.sql2o = sql2o;
+	}
+	
 	@Test
 	public void testInsert(){
-		Person joe = new Person();
-		joe.name = "Li";
-		joe.lastName = "Joy";
-		joe.dob = new Date();
-		joe.created_at = new Date();
+		Person p = new Person();
+		p.set("name", "王爵nice");
+		p.set("last_name", "good");
+		p.set("dob", "1935-12-06");
+		p.set("created_at", new Date());
+		p.save();
+	}
+	
+	@Test
+	public void testInsertBatch(){
+		Person p = new Person();
+		for(int i=1; i<=10; i++){
+			p.set("name", "batch_" + i);
+			p.set("last_name", "good");
+			p.set("dob", "1935-12-06");
+			p.set("created_at", new Date());
+			p.addToBatch();
+		}
+		p.saveBatch();
+	}
+	
+	@Test
+	public void testUpdate(){
+		Person p = new Person();
+		p.set("name", "王爵nice2").where("id", 108);
+		p.update();
+	}
+	
+	@Test
+	public void testDelete(){
+		Person p = new Person();
+		p.where("id", 108);
+		p.delete();
+	}
+	
+	@Test
+	public void testQuery1(){
+		Person p = new Person();
+		List<Person> persons = p.all();
+		System.out.println(persons);
 		
-		Person.db.insert(joe);
 	}
 	
-	/**
-	 * 查询列表
-	 */
 	@Test
-	public void testSearch(){
-		List<Person> person = Person.db.list(Person.class);
+	public void testQuery2(){
+		Person p = new Person();
+		List<Person> persons = p.where("id", 108).list();
+		System.out.println(persons);
+	}
+	
+	@Test
+	public void testQuery3(){
+		Person p = new Person();
+		Person person = p.findById(108);
 		System.out.println(person);
 	}
 	
-	/**
-	 * 分页查询
-	 */
 	@Test
-	public void testPage(){
-		Pager<Person> person = Person.db.page(1, 6, Person.class);
-		System.out.println(person);
-	}
-	
-	/**
-	 * 自定义查询字段
-	 */
-	@Test
-	public void testCustomSql(){
-		List<Person> person = Person.db.sql("select id, name from person").list(Person.class);
-		System.out.println(person);
-	}
-	
-	/**
-	 * 查询一条
-	 */
-	@Test
-	public void testFindOne(){
-		Person person = Person.db.eq("id", 1).first(Person.class);
-		System.out.println(person);
-	}
-	
-	/**
-	 * 根据主键查询
-	 */
-	@Test
-	public void testByPK(){
-		Person person = Person.db.findByPK(1, Person.class);
-		System.out.println(person);
-	}
-	
-	/**
-	 * 查询记录数
-	 */
-	@Test
-	public void testCount(){
-		Long count = Person.db.like("name", "ja%").count(Person.class);
+	public void testQuery4(){
+		Person p = new Person();
+		int count = p.count();
 		System.out.println(count);
 	}
 	
-	/**
-	 * In查询
-	 */
 	@Test
-	public void testIn(){
-		List<Person> person = Person.db.in("id", new Integer[]{1,2}).orderBy("created_at desc").list(Person.class);
-		System.out.println(person);
+	public void testQuery5(){
+		Person p = new Person();
+		Paginator<Person> paginator = p.page(1, 10);
+		System.out.println(paginator.getList());
 	}
 	
-	/**
-	 * where查询
-	 */
 	@Test
-	public void testWhere(){
-		List<Person> person = Person.db.lt("dob", new Date())
-				.lt("id", 999)
-				.orderBy("created_at desc").list(Person.class);
-		System.out.println(person);
+	public void testQuery6(){
+		Person p = new Person();
+//		List<Person> persons = p.where("name like ?", "%Na%").where("id > ?", 80).order("id desc").list();
+		List<Person> persons = p.where("name like ? and id > ? order by ?", "%Na%", 80, "id desc").list();
+		System.out.println(persons);
 	}
 	
-	/**
-	 * 事务测试
-	 */
-	@Test
-	public void testTx(){
-		Transaction trans = Person.db.startTransaction();
-		try {
-			Person row1 = new Person();
-			row1.name = "hello";
-			row1.lastName = "world";
-			Person.db.transaction(trans).insert(row1);
-			
-			Person row2 = new Person();
-			row2.id = 1;
-			row2.name = "qqq";
-			row2.lastName = "wannwanwa";
-			row2.created_at = new Date();
-			row2.dob = new Date();
-			int a = 1 /0;
-			System.out.println(a);
-			Person.db.transaction(trans).update(row2, true);
-		    trans.commit();
-		} catch (Exception t) {
-		    trans.rollback();
-		    t.printStackTrace();
-		}
-	}
 	
-	/**
-	 * 根据主键更新
-	 */
-	@Test
-	public void updateByPk(){
-		Person person = new Person();
-		person.id = 1;
-		person.dob = new Date();
-		Person.db.update(person);
-	}
 }

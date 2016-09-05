@@ -25,7 +25,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Target(TYPE) 
 @Retention(RUNTIME)
-
 public @interface Table {
 
     /**
@@ -33,6 +32,8 @@ public @interface Table {
      * <p> Defaults to the entity name.
      */
     String name() default "";
+    
+    String pk() default "id";
 
     /** (Optional) The catalog of the table.
      * <p> Defaults to the default catalog.
@@ -50,13 +51,5 @@ public @interface Table {
      */
     boolean cached() default true;
     
-    /**
-     * (Optional) Unique constraints that are to be placed on 
-     * the table. These are only used if table generation is in 
-     * effect. These constraints apply in addition to any constraints 
-     * specified by the {@link Column} and {@link JoinColumn} 
-     * annotations and constraints entailed by primary key mappings.
-     * <p> Defaults to no additional constraints.
-     */
     UniqueConstraint[] uniqueConstraints() default {};
 }

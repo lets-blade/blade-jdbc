@@ -25,26 +25,15 @@ public class Base {
 				LOGGER.error("driver load error", e);
 			}
 		}
-		new DataBase(Const.DEFAULT_DB_NAME).open(driver, url, user, password);
+//		new DataBase(Const.DEFAULT_DB_NAME).open(driver, url, user, password);
 	}
 	
 	public static void open(String driver, String url, Properties props) {
-		new DataBase(Const.DEFAULT_DB_NAME).open(driver, url, props);
+//		new DataBase(Const.DEFAULT_DB_NAME).open(driver, url, props);
 	}
 	
-	public static DataBase open(DataSource dataSource) {
-		DataBase database = new DataBase(Const.DEFAULT_DB_NAME);
-		database.open(dataSource);
-		Model.db = database;
-		return database;
+	public static void open(DataSource dataSource) {
+		
 	}
 	
-	public static void close() {
-		new DataBase(Const.DEFAULT_DB_NAME).close();
-	}
-	
-	public static void close(String name) {
-		new DataBase(name).close();
-	}
-
 }

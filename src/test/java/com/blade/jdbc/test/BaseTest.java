@@ -2,18 +2,17 @@ package com.blade.jdbc.test;
 
 import java.io.InputStream;
 import java.util.Properties;
+
 import javax.sql.DataSource;
+
 import org.junit.Before;
+
 import com.alibaba.druid.pool.DruidDataSourceFactory;
-import com.blade.jdbc.Base;
-import com.blade.jdbc.DataBase;
 import com.blade.jdbc.ds.DataSourceFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 public class BaseTest {
-
-	protected DataBase db;
 	
 	protected DataSource testDefaultPool() {
 		try {
@@ -50,7 +49,7 @@ public class BaseTest {
 
 	@Before
 	public void before() {
-		db = Base.open(testDefaultPool());
+//		db = Base.open(testDefaultPool());
 	}
 
 }

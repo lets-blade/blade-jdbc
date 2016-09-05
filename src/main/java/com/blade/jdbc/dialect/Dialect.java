@@ -1,41 +1,21 @@
 package com.blade.jdbc.dialect;
 
-import java.sql.ResultSet;
-
-import com.blade.jdbc.Query;
+import com.blade.jdbc.Model;
 
 public interface Dialect {
-
-	String getInsertSql(Query query, Object row);
 	
-	Object[] getInsertArgs(Query query, Object row);
-
-	String getUpdateSql(Query query, Object row);
+	String getSaveSql(Model model);
 	
-	String getUpdateByPKSql(Query query, Object row);
-
-	Object[] getUpdateArgs(Query query, Object row);
-
-	String getDeleteSql(Query query, Object row);
-
-	Object[] getDeleteArgs(Query query, Object row);
-
-	String getUpsertSql(Query query, Object row);
-
-	Object[] getUpsertArgs(Query query, Object row);
-
-	String getPKSql(Query query, Class<?> rowClass);
-
-	String getSelectSql(Query query, Class<?> rowClass);
+	String getUpdateSql(Model model);
 	
-	String getCountSql(Query query, Class<?> rowClass);
+	String getDeleteSql(Model model);
 
-	String getPageSql(Query query, Class<?> rowClass);
+	String getQuerySql(Model model);
 	
-	String getCreateTableSql(Class<?> clazz);
-
-	ModelInfo getModelInfo(Class<?> rowClass);
+	String getQueryOneSql(Model model);
 	
-	void populateGeneratedKey(ResultSet generatedKeys, Object insertRow);
+	String getQueryCountSql(Model model);
+	
+	String getQueryPageSql(Model model);
 
 }
