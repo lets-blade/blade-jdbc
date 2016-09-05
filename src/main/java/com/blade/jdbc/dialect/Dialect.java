@@ -10,12 +10,12 @@ public interface Dialect {
 	
 	String getDeleteSql(Model model);
 
-	String getQuerySql(Model model);
+	String getQuerySql(String sql, Model model);
 	
-	String getQueryOneSql(Model model);
+	String getQueryOneSql(String sql, Model model);
 	
-	String getQueryCountSql(Model model);
+	String getQueryCountSql(String sql, Model model);
 	
-	String getQueryPageSql(Model model);
+	String getQueryPageSql(String sql, Model model);
 
 }

@@ -29,7 +29,7 @@ public class DefaultDialect implements Dialect {
 		sql.append(") values(");
 		for (int i = 1; i <= len; i++) {
 			if (i < len) {
-				sql.append(":p" + i + ",");
+				sql.append(":p" + i + ", ");
 			} else {
 				sql.append(":p" + i);
 			}
@@ -54,11 +54,11 @@ public class DefaultDialect implements Dialect {
 			if (pos < len) {
 				sql.append(column + " = :p" + pos + ",");
 			} else {
-				sql.append(column + " = :p" + pos);
+				sql.append(column + " = :p" + pos + ' ');
 			}
 			pos++;
 		}
-		sql.append(this.whereSql(pos + 1,model));
+		sql.append(this.whereSql(pos, model));
 		return sql.toString();
 	}
 	
@@ -71,20 +71,24 @@ public class DefaultDialect implements Dialect {
 	}
 
 	@Override
-	public String getQuerySql(Model model) {
-		String sql = this.querySql(model);
-		String order = model.order();
+	public String getQuerySql(String sql, Model model) {
+		String realSql = this.querySql(sql, model);
+		String order = model.getOrder();
 		if(null != order){
-			sql += " order by " + order;
+			realSql += "order by " + order;
 		}
-		return sql;
+		return realSql;
 	}
 	
-	private String querySql(Model model){
-		StringBuffer sql = new StringBuffer();
-		sql.append("select * from ").append(model.table()).append(' ');
-		sql.append(this.whereSql(1, model));
-		return sql.toString();
+	private String querySql(String sql, Model model){
+		StringBuffer sqlBuf = new StringBuffer();
+		if(null != sql){
+			sqlBuf.append(sql).append(' ');
+		} else {
+			sqlBuf.append("select * from ").append(model.table()).append(' ');
+		}
+		sqlBuf.append(this.whereSql(1, model));
+		return sqlBuf.toString();
 	}
 	
 	private String whereSql(int index, Model model){
@@ -93,9 +97,10 @@ public class DefaultDialect implements Dialect {
 		if (null != where && !where.isEmpty()) {
 			sql.append("where ");
 			Set<ParamKey> whereKeys = where.keySet();
+			int len = whereKeys.size();
 			for (ParamKey paramKey : whereKeys) {
 				String apped = paramKey.getColumn() + " " + paramKey.getOpt().trim() + " :p" + index;
-				if (index > 1 && !"".equals(paramKey.getOpt())) {
+				if (index > 1 && !"".equals(paramKey.getOpt()) && len > 1) {
 					sql.append(" and " + apped).append(' ');
 				} else {
 					sql.append(apped).append(' ');
@@ -107,30 +112,34 @@ public class DefaultDialect implements Dialect {
 	}
 
 	@Override
-	public String getQueryOneSql(Model model) {
-		String sql = this.querySql(model);
-		sql += " limit 1";
+	public String getQueryOneSql(String sql, Model model) {
+		String realSql = this.querySql(sql, model);
+		realSql += " limit 1";
+		return realSql.toString();
+	}
+	
+	@Override
+	public String getQueryCountSql(String sql, Model model) {
+		StringBuffer sqlBuf = new StringBuffer();
+		if(null != sql){
+			sqlBuf.append(sql);
+		} else {
+			sqlBuf.append("select count(")
+			.append(model.pkName())
+			.append(") from ")
+			.append(model.table());
+		}
+		sqlBuf.append(' ').append(this.whereSql(1, model));
 		return sql.toString();
 	}
 	
 	@Override
-	public String getQueryCountSql(Model model) {
-		StringBuffer sql = new StringBuffer();
-		sql.append("select count(")
-		.append(model.pkName())
-		.append(") from ")
-		.append(model.table()).append(' ')
-		.append(this.whereSql(1, model));
-		return sql.toString();
-	}
-	
-	@Override
-	public String getQueryPageSql(Model model) {
-		String sql = this.getQuerySql(model);
+	public String getQueryPageSql(String sql, Model model) {
+		String realSql = this.getQuerySql(sql, model);
 		Map<ParamKey, Object> where = model.params();
 		int whereSize = where.size();
-		sql += " limit :p" + (whereSize+1) + ", :p" + (whereSize+2);
-		return sql;
+		realSql += " limit :p" + (whereSize+1) + ", :p" + (whereSize+2);
+		return realSql;
 	}
 
 }

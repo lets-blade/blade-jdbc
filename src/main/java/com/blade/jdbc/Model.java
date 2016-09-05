@@ -2,6 +2,7 @@ package com.blade.jdbc;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -10,13 +11,16 @@ import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sql2o.Connection;
 import org.sql2o.Query;
 import org.sql2o.Sql2o;
 
 import com.blade.jdbc.annotation.Table;
 import com.blade.jdbc.dialect.DefaultDialect;
 import com.blade.jdbc.dialect.Dialect;
+import com.blade.jdbc.exception.DBException;
 import com.blade.jdbc.kit.QueryKit;
+import com.blade.jdbc.tx.AtomTx;
 
 @SuppressWarnings("unchecked")
 public class Model extends HashMap<String, Object> {
@@ -29,11 +33,15 @@ public class Model extends HashMap<String, Object> {
 
 	public static Sql2o sql2o;
 	
+	private Connection connection;
+	
 	private Query query;
 
 	private Dialect dialect = new DefaultDialect();
 	
 	private Map<ParamKey, Object> params = new TreeMap<ParamKey, Object>();
+	
+	private String sql;
 	
 	private String order;
 	
@@ -68,7 +76,17 @@ public class Model extends HashMap<String, Object> {
 		}
 		return this;
 	}
-
+	
+	public Model sql(String sql){
+		this.sql = sql;
+		return this;
+	}
+	
+	public Model sql(String sql, Object...values){
+		this.sql = sql;
+		return this;
+	}
+	
 	public Model set(String name, Object value) {
 		this.put(name, value);
 		return this;
@@ -85,13 +103,22 @@ public class Model extends HashMap<String, Object> {
 	public <K> K save() {
 		String sql = dialect.getSaveSql(this);
 		LOGGER.debug("Preparing\t=> {}", sql);
-		Query query = sql2o.open().createQuery(sql);
-
+		
+		if(!this.isEmpty()){
+			LOGGER.debug("Parameters\t=> {}", Arrays.toString(this.values().toArray()));
+		}
+		
+		if(null == this.connection){
+			this.connection = sql2o.open();
+		}
+		
+		this.query = connection.createQuery(sql);
 		Collection<Object> vlaues = this.values();
 		Object[] paramValues = vlaues.toArray(new Object[vlaues.size()]);
-		query.withParams(paramValues);
-		
-		return (K) query.executeUpdate().getKey();
+		this.query.withParams(paramValues);
+		K k = (K) this.query.executeUpdate().getKey();
+		this.clear();
+		return k;
 	}
 	
 	public void addToBatch(){
@@ -105,18 +132,40 @@ public class Model extends HashMap<String, Object> {
 		this.clear();
 	}
 	
-	public void saveBatch(){
+	public int[] saveBatch(){
 		if(null != query){
-			query.executeBatch();
+			int[] result = query.executeBatch().getBatchResult();
 	        query.getConnection().commit();
+	        this.clear();
+	        return result;
 		}
+		return null;
 	}
 	
-	public void update() {
+	public int update() {
 		String sql = dialect.getUpdateSql(this);
 		LOGGER.debug("Preparing\t=> {}", sql);
-		Query query = sql2o.open().createQuery(sql);
-
+		
+		Object[] args = this.params.values().toArray();
+		
+		if(!this.isEmpty()){
+			if(null == args){
+				args = this.values().toArray();
+			} else{
+				List<Object> argList = new ArrayList<Object>(this.values());
+				argList.addAll(this.params.values());
+				args = argList.toArray();
+			}
+		}
+		
+		if(null != args){
+			LOGGER.debug("Parameters\t=> {}", Arrays.toString(args));
+		}
+		
+		if(null == this.connection){
+			this.connection = sql2o.open();
+		}
+		Query query = this.connection.createQuery(sql);
 		List<Object> vlaues = new ArrayList<Object>(this.values());
 		if (!this.params.isEmpty()) {
 			vlaues.addAll(this.params.values());
@@ -124,13 +173,23 @@ public class Model extends HashMap<String, Object> {
 		
 		Object[] paramValues = vlaues.toArray(new Object[vlaues.size()]);
 		query.withParams(paramValues);
-		query.executeUpdate();
+		int result = query.executeUpdate().getResult();
+		this.clear();
+		return result;
 	}
 
-	public void delete(){
+	public int delete(){
 		String sql = dialect.getDeleteSql(this);
 		LOGGER.debug("Preparing\t=> {}", sql);
-		Query query = sql2o.open().createQuery(sql);
+		
+		if(!this.params.isEmpty()){
+			LOGGER.debug("Parameters\t=> {}", Arrays.toString(this.params.values().toArray()));
+		}
+		
+		if(null == this.connection){
+			this.connection = sql2o.open();
+		}
+		Query query = this.connection.createQuery(sql);
 		
 		List<Object> vlaues = new ArrayList<Object>(this.values());
 		if (!this.params.isEmpty()) {
@@ -139,8 +198,23 @@ public class Model extends HashMap<String, Object> {
 		
 		Object[] paramValues = vlaues.toArray(new Object[vlaues.size()]);
 		query.withParams(paramValues);
-		
-		query.executeUpdate();
+		int result = query.executeUpdate().getResult();
+		this.clear();
+		return result;
+	}
+	
+	public void tx(AtomTx atomTx){
+		this.connection = sql2o.beginTransaction();
+		try {
+			atomTx.execute();
+			this.connection.commit();
+			this.clear();
+		} catch (DBException e) {
+			LOGGER.error(e.getMessage(), e);
+			this.connection.rollback();
+		}finally {
+			this.close(this.connection);
+		}
 	}
 	
 	public Model order(String order){
@@ -149,22 +223,25 @@ public class Model extends HashMap<String, Object> {
 	}
 	
 	public <T extends Model> List<T> all() {
-		return this.list();
+		return this.list(null);
 	}
 
 	public <T extends Model> List<T> list() {
-		return this.list(null);
+		return this.list(this.sql);
 	}
 	
-	public <T extends Model> List<T> list(String sql) {
-		if(null == sql){
-			sql = dialect.getQuerySql(this);
-		}
-		LOGGER.debug("Preparing\t=> {}", sql);
-		Query query = sql2o.open().createQuery(sql);
+	private <T extends Model> List<T> list(String sql) {
+		
+		String querySql = dialect.getQuerySql(sql, this);
+		
+		LOGGER.debug("Preparing\t=> {}", querySql);
+		
+		Query query = sql2o.open().createQuery(querySql);
+		
 		if (!this.params.isEmpty()) {
-			Object[] paramValues = this.params.values().toArray(new Object[this.params.size()]);
+			Object[] paramValues = this.params.values().toArray();
 			query.withParams(paramValues);
+			LOGGER.debug("Parameters\t=> {}", Arrays.toString(paramValues));
 		}
 		return (List<T>) query.executeAndFetchModels(clazz);
 	}
@@ -177,7 +254,7 @@ public class Model extends HashMap<String, Object> {
 		
 		int offset = (pager.getPageNum() - 1) * limit;
 		
-		String sql = dialect.getQueryPageSql(this);
+		String sql = dialect.getQueryPageSql(null, this);
 		
 		int index = params.size() + 1;
 		this.params.put(new ParamKey(index, "offset"), offset);
@@ -195,27 +272,40 @@ public class Model extends HashMap<String, Object> {
 	}
 	
 	public <T extends Model> T findOne() {
-		String sql = dialect.getQueryOneSql(this);
+		String sql = dialect.getQueryOneSql(this.sql, this);
 		LOGGER.debug("Preparing\t=> {}", sql);
 		Query query = sql2o.open().createQuery(sql);
 		
 		if (!this.params.isEmpty()) {
-			Object[] paramValues = this.params.values().toArray(new Object[this.params.size()]);
+			Object[] paramValues = this.params.values().toArray();
 			query.withParams(paramValues);
+			LOGGER.debug("Parameters\t=> {}", Arrays.toString(paramValues));
 		}
-		return (T) query.executeAndFetchTable().asModel(clazz).get(0);
+		
+		List<T> models = (List<T>) query.executeAndFetchTable().asModel(clazz);
+		if(null != models && !models.isEmpty()){
+			return models.get(0);
+		}
+		return null;
 	}
 	
 	public int count(){
-		String sql = dialect.getQueryCountSql(this);
+		String sql = dialect.getQueryCountSql(this.sql, this);
 		LOGGER.debug("Preparing\t=> {}", sql);
 		Query query = sql2o.open().createQuery(sql);
 		
 		if (!this.params.isEmpty()) {
-			Object[] paramValues = this.params.values().toArray(new Object[this.params.size()]);
+			Object[] paramValues = this.params.values().toArray();
 			query.withParams(paramValues);
+			LOGGER.debug("Parameters\t=> {}", Arrays.toString(paramValues));
 		}
 		return query.executeScalar(Integer.class);
+	}
+	
+	private void close(Connection connection){
+		if(null != connection){
+			connection.close();
+		}
 	}
 	
 	/** meta data **/
@@ -235,7 +325,7 @@ public class Model extends HashMap<String, Object> {
 		return this.params;
 	}
 	
-	public String order(){
+	public String getOrder(){
 		return this.order;
 	}
 }

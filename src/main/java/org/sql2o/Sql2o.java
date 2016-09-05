@@ -1,14 +1,13 @@
 package org.sql2o;
 
-import org.sql2o.logging.LocalLoggerFactory;
-import org.sql2o.logging.Logger;
-import org.sql2o.quirks.Quirks;
-import org.sql2o.quirks.QuirksDetector;
-
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.sql2o.quirks.Quirks;
+import org.sql2o.quirks.QuirksDetector;
 
 /**
  * Sql2o is the main class for the sql2o library.
@@ -29,9 +28,7 @@ public class Sql2o {
     private final DataSource dataSource;
     private Map<String, String> defaultColumnMappings;
     private boolean defaultCaseSensitive;
-
-    private final static Logger logger = LocalLoggerFactory.getLogger(Sql2o.class);
-
+    
     public Sql2o(String jndiLookup) {
         this(JndiDataSource.getJndiDatasource(jndiLookup));
     }
@@ -126,44 +123,7 @@ public class Sql2o {
     public void setDefaultCaseSensitive(boolean defaultCaseSensitive) {
         this.defaultCaseSensitive = defaultCaseSensitive;
     }
-
-    /**
-     * Creates a {@link Query}
-     * @param query the sql query string
-     * @param returnGeneratedKeys boolean value indicating if the database should return any generated keys.
-     * @return the {@link Query} instance
-     *
-     * @deprecated create queries with {@link org.sql2o.Connection} class instead, using try-with-resource blocks
-     * <code>
-     *     try (Connection con = sql2o.open()) {
-     *         return sql2o.createQuery(query, name, returnGeneratedKeys).executeAndFetch(Pojo.class);
-     *     }
-     * </code>
-     */
-    @Deprecated
-    public Query createQuery(String query, boolean returnGeneratedKeys) {
-        return new Connection(this, true).createQuery(query, returnGeneratedKeys);
-    }
-
-    /**
-     * Creates a {@link Query}
-     * @param query the sql query string
-     * @return the {@link Query} instance
-     *
-     * @deprecated create queries with {@link org.sql2o.Connection} class instead, using try-with-resource blocks
-     * <code>
-     *     try (Connection con = sql2o.open()) {
-     *         return sql2o.createQuery(query, name).executeAndFetch(Pojo.class);
-     *     }
-     * </code>
-     */
-    @Deprecated
-    public Query createQuery(String query){
-
-        Connection connection = new Connection(this, true);
-        return connection.createQuery(query);
-    }
-
+    
     /**
      * Opens a connection to the database
      * @return instance of the {@link org.sql2o.Connection} class.
@@ -180,7 +140,6 @@ public class Sql2o {
      * @param <V>
      * @return
      */
-    @SuppressWarnings("unchecked")
     public <V> V withConnection(StatementRunnableWithResult<V> runnable, Object argument) {
         Connection connection = null;
         try{

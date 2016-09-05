@@ -99,14 +99,8 @@ public class Convert {
             processProvider(provider);
         }
     }
-
-    @SuppressWarnings("UnusedDeclaration")
-    @Deprecated
-    public static Converter getConverter(Class clazz) throws ConverterException {
-        return throwIfNull(clazz, getConverterIfExists(clazz));
-    }
-
-    public static <E> Converter<E> throwIfNull(Class<E> clazz, Converter<E> converter) throws ConverterException {
+    
+    public static <E> Converter<E> throwIfNull(Class<?> clazz, Converter<E> converter) throws ConverterException {
         if (converter == null) {
             throw new ConverterException("No converter registered for class: " + clazz.getName());
         }
@@ -128,24 +122,7 @@ public class Convert {
         }
         return null;
     }
-
-    @SuppressWarnings("UnusedDeclaration")
-    @Deprecated
-    public static void registerConverter(Class clazz, Converter converter) {
-        wl.lock();
-        try {
-            registerConverter0(clazz, converter);
-        } finally {
-            wl.unlock();
-        }
-    }
-
-
-    private static void registerConverter0(Class clazz, Converter converter) {
-        registeredConverters.put(clazz, converter);
-    }
-
-    @SuppressWarnings("UnusedDeclaration")
+    
     public static void registerEnumConverter(EnumConverterFactory enumConverterFactory) {
         if (enumConverterFactory == null) throw new IllegalArgumentException();
         registeredEnumConverterFactory = enumConverterFactory;

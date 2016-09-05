@@ -215,7 +215,7 @@ public class Connection implements AutoCloseable, Closeable {
         return null;
     }
 
-    @SuppressWarnings("unchecked") // need to change Convert
+    // need to change Convert
     public <V> List<V> getKeys(Class<V> returnType) {
         final Quirks quirks = sql2o.getQuirks();
         if (!this.canGetKeys) {

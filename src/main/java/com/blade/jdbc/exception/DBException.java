@@ -3,10 +3,7 @@ package com.blade.jdbc.exception;
 import com.blade.jdbc.Util;
 
 public class DBException extends RuntimeException {
-
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = 297141479834130415L;
 	
 	final String message;

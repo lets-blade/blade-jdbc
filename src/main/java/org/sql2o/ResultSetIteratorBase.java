@@ -98,7 +98,8 @@ public abstract class ResultSetIteratorBase<T> implements Iterator<T> {
         return quirks.getColumnName(meta, colIdx);
     }
 
-    private final class ResultSetValue<T> {
+    @SuppressWarnings("hiding")
+	private final class ResultSetValue<T> {
         public final T value;
 
         public ResultSetValue(T value){
