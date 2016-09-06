@@ -34,7 +34,7 @@
 		    <groupId>redis.clients</groupId>
 		    <artifactId>jedis</artifactId>
 		    <version>${redis.version}</version>
-		    <scope>compile</scope>
+		    <scope>provided</scope>
 		</dependency>
 		
 		<dependency>
