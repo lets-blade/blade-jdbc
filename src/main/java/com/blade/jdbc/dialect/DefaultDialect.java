@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.blade.jdbc.Model;
+import com.blade.jdbc.PageRow;
 import com.blade.jdbc.ParamKey;
 
 public class DefaultDialect implements Dialect {
@@ -77,6 +78,13 @@ public class DefaultDialect implements Dialect {
 		if(null != order){
 			realSql += "order by " + order;
 		}
+		PageRow pageRow = model.getPageRow();
+		if(null != pageRow){
+			int index = model.params().size() + 1;
+			model.params().put(new ParamKey(index, "offset"), pageRow.getOffset());
+			model.params().put(new ParamKey(index + 1, "limit"), pageRow.getLimit());
+			realSql += " limit :p" + index + ", :p" + (index + 1);
+		}
 		return realSql;
 	}
 	
@@ -122,7 +130,18 @@ public class DefaultDialect implements Dialect {
 	public String getQueryCountSql(String sql, Model model) {
 		StringBuffer sqlBuf = new StringBuffer();
 		if(null != sql){
-			sqlBuf.append(sql);
+			sqlBuf.append("select count(1) from");
+	        int pos = sql.indexOf("from") + 4;
+	        int w = sql.indexOf("where");
+	        int o = sql.indexOf("order by");
+	        
+	        if(w != -1){
+	            sqlBuf.append(sql.substring(pos, w));   
+	        } else if(o != -1){
+	            sqlBuf.append(sql.substring(pos, 0));   
+	        } else{
+	            sqlBuf.append(sql.substring(pos));  
+	        }
 		} else {
 			sqlBuf.append("select count(")
 			.append(model.pkName())
@@ -130,16 +149,7 @@ public class DefaultDialect implements Dialect {
 			.append(model.table());
 		}
 		sqlBuf.append(' ').append(this.whereSql(1, model));
-		return sql.toString();
+		return sqlBuf.toString();
 	}
 	
-	@Override
-	public String getQueryPageSql(String sql, Model model) {
-		String realSql = this.getQuerySql(sql, model);
-		Map<ParamKey, Object> where = model.params();
-		int whereSize = where.size();
-		realSql += " limit :p" + (whereSize+1) + ", :p" + (whereSize+2);
-		return realSql;
-	}
-
 }

@@ -150,5 +150,11 @@ public class CRUDTest extends BaseTest {
 		System.out.println(count);
 	}
 	
-
+	@Test
+	public void testQuery10() {
+		Person p = new Person();
+		Paginator<Person> paginator = p.sql("select id, name from person").where("id > ?", 5).order("id desc").page(1, 10);
+		System.out.println(paginator);
+	}
+	
 }

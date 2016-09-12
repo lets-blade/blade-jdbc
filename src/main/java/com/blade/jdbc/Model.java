@@ -38,6 +38,8 @@ public class Model extends HashMap<String, Object> {
 	
 	private Map<ParamKey, Object> params = new TreeMap<ParamKey, Object>();
 	
+	private PageRow pageRow;
+	
 	private String sql;
 	
 	private String order;
@@ -240,25 +242,21 @@ public class Model extends HashMap<String, Object> {
 			query.withParams(paramValues);
 			LOGGER.debug("Parameters\t=> {}", Arrays.toString(paramValues));
 		}
-		return (List<T>) query.executeAndFetchModels(clazz);
+		
+		List<T> list = (List<T>) query.executeAndFetchModels(clazz);
+		this.clear();
+		return list;
 	}
 	
 	public <T extends Model> Paginator<T> page(int page, int limit) {
-		
 		// query count
-		long total = this.count();
+		long total = this.count(false);
 		Paginator<T> pager = new Paginator<T>(total, page, limit);
-		
 		int offset = (pager.getPageNum() - 1) * limit;
-		
-		String sql = dialect.getQueryPageSql(null, this);
-		
-		int index = params.size() + 1;
-		this.params.put(new ParamKey(index, "offset"), offset);
-		this.params.put(new ParamKey(index + 1, "limit"), limit);
-		
-		List<T> result = this.list(sql);
+		pageRow = new PageRow(offset, limit);
+		List<T> result = this.list(null);
 		pager.setList(result);
+		pageRow = null;
 		return pager;
 	}
 	
@@ -280,6 +278,9 @@ public class Model extends HashMap<String, Object> {
 		}
 		
 		List<T> models = (List<T>) query.executeAndFetchTable().asModel(clazz);
+		
+		this.clear();
+		
 		if(null != models && !models.isEmpty()){
 			return models.get(0);
 		}
@@ -287,6 +288,10 @@ public class Model extends HashMap<String, Object> {
 	}
 	
 	public int count(){
+		return this.count(true);
+	}
+	
+	public int count(boolean clear){
 		String sql = dialect.getQueryCountSql(this.sql, this);
 		LOGGER.debug("Preparing\t=> {}", sql);
 		Query query = Base.sql2o.open().createQuery(sql);
@@ -296,7 +301,11 @@ public class Model extends HashMap<String, Object> {
 			query.withParams(paramValues);
 			LOGGER.debug("Parameters\t=> {}", Arrays.toString(paramValues));
 		}
-		return query.executeScalar(Integer.class);
+		int count = query.executeScalar(Integer.class);
+		if(clear){
+			this.clear();
+		}
+		return count;
 	}
 	
 	private void close(Connection connection){
@@ -322,7 +331,17 @@ public class Model extends HashMap<String, Object> {
 		return this.params;
 	}
 	
+	public PageRow getPageRow() {
+		return pageRow;
+	}
+	
 	public String getOrder(){
 		return this.order;
+	}
+	
+	@Override
+	public void clear() {
+		super.clear();
+		this.params.clear();
 	}
 }
