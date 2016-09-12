@@ -2,9 +2,5 @@ language: java
 jdk:
   - oraclejdk8
   - oraclejdk7
-test:
-  - mvn test -Dmaven.test.skip=true
-install:
+script:
   - mvn install -Dmaven.test.skip=true
-after_success:
-  - mvn cobertura:cobertura coveralls:report
