@@ -176,6 +176,10 @@ public class Model extends HashMap<String, Object> {
 		this.clear();
 		return result;
 	}
+	
+	public void execute() {
+		
+	}
 
 	public int delete(){
 		String sql = dialect.getDeleteSql(this);
@@ -344,4 +348,5 @@ public class Model extends HashMap<String, Object> {
 		super.clear();
 		this.params.clear();
 	}
+	
 }

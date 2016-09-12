@@ -14,6 +14,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j-api.version>1.7.21</slf4j-api.version>
 		<mysql.version>5.1.38</mysql.version>
+		<h2.version>1.4.192</h2.version>
 		<junit.version>4.12</junit.version>
 		<hikaricp.version>2.4.1</hikaricp.version>
 		<druid.version>1.0.24</druid.version>
@@ -50,7 +51,7 @@
 			<version>${mysql.version}</version>
 			<scope>test</scope>
 		</dependency>
-		
+				
 		<dependency>
 			<groupId>com.zaxxer</groupId>
 			<artifactId>HikariCP</artifactId>

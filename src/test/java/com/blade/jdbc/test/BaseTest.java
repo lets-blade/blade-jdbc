@@ -35,7 +35,7 @@ public class BaseTest {
 		config.setInitializationFailFast(true);
 		return new HikariDataSource(config);
 	}
-
+	
 	protected DataSource testDruidPool() {
 		try {
 			InputStream in = BaseTest.class.getClassLoader().getResourceAsStream("druid.properties");
@@ -50,7 +50,7 @@ public class BaseTest {
 	
 	@Before
 	public void before() {
-//		Base.open("jdbc:mysql://localhost:3306/demo", "root", "root");
+//		Base.open("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "sa", "");
 		Base.open(testDefaultPool());
 	}
 

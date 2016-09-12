@@ -64,7 +64,7 @@ public class CRUDTest extends BaseTest {
 					p.set("created_at", new Date());
 					p.save();
 					
-					int a = 1 / 0;
+//					int a = 1 / 0;
 					
 					p.set("name", "aaa").where("id", 108);
 					p.update();
