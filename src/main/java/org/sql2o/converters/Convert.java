@@ -18,7 +18,7 @@ public class Convert {
 
     private static final ReentrantReadWriteLock rrwl = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock rl = rrwl.readLock();
-    private static final ReentrantReadWriteLock.WriteLock wl = rrwl.writeLock();
+//    private static final ReentrantReadWriteLock.WriteLock wl = rrwl.writeLock();
     private static volatile EnumConverterFactory registeredEnumConverterFactory = new DefaultEnumConverterFactory();
     private static Map<Class<?>, Converter<?>> registeredConverters = new HashMap<Class<?>, Converter<?>>();
 

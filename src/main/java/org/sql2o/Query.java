@@ -35,8 +35,8 @@ import com.blade.jdbc.Model;
 /**
  * Represents a sql2o statement. With sql2o, all statements are instances of the Query class.
  */
-public class Query implements AutoCloseable {
-
+public class Query {
+	
     private final static Logger logger = LocalLoggerFactory.getLogger(Query.class);
 
     private Connection connection;
