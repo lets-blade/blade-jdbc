@@ -1,8 +1,8 @@
 package com.blade.jdbc.annotation;
-import java.lang.annotation.Target;
-import java.lang.annotation.Retention;
 
-import static com.blade.jdbc.annotation.EnumType.ORDINAL;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -10,7 +10,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Specifies that a persistent property or field should be 
  * persisted as a enumerated type. It may be used in conjunction 
- * with the {@link Basic} annotation.
+ * with the {@link } annotation.
  *
  * <pre>
  *   Example:
@@ -34,5 +34,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Enumerated {
 
     /** (Optional) The type used in mapping an enum type. */
-    EnumType value() default ORDINAL;
+    EnumType value() default EnumType.ORDINAL;
 }

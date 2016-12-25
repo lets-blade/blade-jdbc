@@ -1,9 +1,12 @@
 package com.blade.jdbc.tx;
 
-import com.blade.jdbc.exception.DBException;
+import org.sql2o.Connection;
 
+/**
+ * Created by biezhi on 2016/12/25.
+ */
 public interface AtomTx {
 
-	void execute() throws DBException;
-	
+    void call(Connection connection);
+
 }

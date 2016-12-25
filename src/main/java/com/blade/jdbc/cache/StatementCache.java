@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.blade.jdbc.Util;
+import com.blade.jdbc.utils.Util;
 
 public enum StatementCache {
 	INSTANCE;
