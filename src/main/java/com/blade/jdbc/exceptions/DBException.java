@@ -1,6 +1,6 @@
 package com.blade.jdbc.exceptions;
 
-import com.blade.jdbc.enums.IEnum;
+import com.blade.jdbc.model.IEnum;
 
 /**
  * 自定义异常类

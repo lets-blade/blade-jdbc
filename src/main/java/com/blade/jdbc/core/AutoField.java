@@ -1,4 +1,4 @@
-package com.blade.jdbc.persistence;
+package com.blade.jdbc.core;
 
 /**
  * 组装sql时的列信息

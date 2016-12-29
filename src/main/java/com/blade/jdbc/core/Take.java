@@ -1,7 +1,7 @@
-package com.blade.jdbc.persistence;
+package com.blade.jdbc.core;
 
 import com.blade.jdbc.exceptions.AssistantException;
-import com.blade.jdbc.pager.PageRow;
+import com.blade.jdbc.model.PageRow;
 
 import java.util.ArrayList;
 import java.util.Arrays;

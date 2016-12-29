@@ -1,4 +1,4 @@
-package com.blade.jdbc.bean;
+package com.blade.jdbc.model;
 
 import java.util.Map;
 import java.util.WeakHashMap;

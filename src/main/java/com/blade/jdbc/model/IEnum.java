@@ -1,4 +1,4 @@
-package com.blade.jdbc.enums;
+package com.blade.jdbc.model;
 
 /**
  * 枚举接口

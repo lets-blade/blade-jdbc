@@ -1,11 +1,11 @@
-package com.blade.jdbc.bean;
+package com.blade.jdbc.model;
 
 import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * bean converter config
+ * model converter config
  */
 public class BeanConverterConfig {
 

@@ -1,4 +1,4 @@
-package com.blade.jdbc.persistence;
+package com.blade.jdbc.core;
 
 import com.blade.jdbc.annotation.Table;
 import com.blade.jdbc.utils.NameUtils;

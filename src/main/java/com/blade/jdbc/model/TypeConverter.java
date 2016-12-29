@@ -1,4 +1,4 @@
-package com.blade.jdbc.bean;
+package com.blade.jdbc.model;
 
 /**
  * data type converter

@@ -1,9 +1,9 @@
 package com.blade.jdbc.ar;
 
 import com.blade.jdbc.ActiveRecord;
-import com.blade.jdbc.pager.PageRow;
-import com.blade.jdbc.pager.Paginator;
-import com.blade.jdbc.persistence.*;
+import com.blade.jdbc.model.PageRow;
+import com.blade.jdbc.model.Paginator;
+import com.blade.jdbc.core.*;
 import com.blade.jdbc.tx.AtomTx;
 import com.blade.jdbc.utils.ClassUtils;
 import com.blade.jdbc.utils.NameUtils;

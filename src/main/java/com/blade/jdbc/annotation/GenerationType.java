@@ -8,26 +8,26 @@ package com.blade.jdbc.annotation;
 public enum GenerationType { 
 
     /**
-     * Indicates that the persistence provider must assign 
+     * Indicates that the core provider must assign
      * primary keys for the entity using an underlying 
      * database table to ensure uniqueness.
      */
     TABLE, 
 
     /**
-     * Indicates that the persistence provider must assign 
+     * Indicates that the core provider must assign
      * primary keys for the entity using database sequence column.
      */
     SEQUENCE, 
 
     /**
-     * Indicates that the persistence provider must assign 
+     * Indicates that the core provider must assign
      * primary keys for the entity using database identity column.
      */
     IDENTITY, 
 
     /**
-     * Indicates that the persistence provider should pick an 
+     * Indicates that the core provider should pick an
      * appropriate strategy for the particular database. The 
      * <code>AUTO</code> generation strategy may expect a database 
      * resource to exist, or it may attempt to create one. A vendor 

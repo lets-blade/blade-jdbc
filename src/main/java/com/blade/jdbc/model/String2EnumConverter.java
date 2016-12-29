@@ -1,6 +1,4 @@
-package com.blade.jdbc.bean;
-
-import com.blade.jdbc.enums.IEnum;
+package com.blade.jdbc.model;
 
 /**
  * string to enum

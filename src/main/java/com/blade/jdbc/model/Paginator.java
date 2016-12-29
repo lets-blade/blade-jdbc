@@ -1,4 +1,4 @@
-package com.blade.jdbc.pager;
+package com.blade.jdbc.model;
 
 import java.io.Serializable;
 import java.util.Arrays;

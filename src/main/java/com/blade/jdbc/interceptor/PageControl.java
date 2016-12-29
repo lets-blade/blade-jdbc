@@ -1,7 +1,7 @@
 package com.blade.jdbc.interceptor;
 
-import com.blade.jdbc.pager.PageRow;
-import com.blade.jdbc.pager.Paginator;
+import com.blade.jdbc.model.PageRow;
+import com.blade.jdbc.model.Paginator;
 import com.blade.jdbc.utils.Utils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

@@ -1,4 +1,4 @@
-package com.blade.jdbc.persistence;
+package com.blade.jdbc.core;
 
 /**
  * 名称处理接口

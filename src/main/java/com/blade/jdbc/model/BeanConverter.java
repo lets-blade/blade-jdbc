@@ -1,6 +1,5 @@
-package com.blade.jdbc.bean;
+package com.blade.jdbc.model;
 
-import com.blade.jdbc.enums.IEnum;
 import com.blade.jdbc.exceptions.AssistantException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +10,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
- * bean converter
+ * model converter
  */
 @SuppressWarnings("unchecked")
 public class BeanConverter {
@@ -225,7 +224,7 @@ public class BeanConverter {
     /**
      * 返回JavaBean所有属性的<code>PropertyDescriptor</code>
      *
-     * @param beanClass the bean class
+     * @param beanClass the model class
      * @return the property descriptor [ ]
      */
     private static PropertyDescriptor[] getPropertyDescriptors(Class<?> beanClass) {
@@ -237,7 +236,7 @@ public class BeanConverter {
     /**
      * 返回JavaBean给定JavaBean给定属性的 <code>PropertyDescriptors</code>
      *
-     * @param beanClass the bean class
+     * @param beanClass the model class
      * @param propertyName the name of the property
      * @return the corresponding PropertyDescriptor, or <code>null</code> if none
      */

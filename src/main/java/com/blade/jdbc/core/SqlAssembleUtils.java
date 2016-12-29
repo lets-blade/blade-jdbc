@@ -1,6 +1,6 @@
-package com.blade.jdbc.persistence;
+package com.blade.jdbc.core;
 
-import com.blade.jdbc.bean.QueryOpts;
+import com.blade.jdbc.model.QueryOpts;
 import com.blade.jdbc.exceptions.AssistantException;
 import com.blade.jdbc.utils.ClassUtils;
 import com.blade.jdbc.utils.CollectionUtils;

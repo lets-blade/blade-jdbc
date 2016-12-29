@@ -1,4 +1,4 @@
-package com.blade.jdbc.bean;
+package com.blade.jdbc.model;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.blade.jdbc.exceptions.AssistantException;
 
 /**
- * java bean cache
+ * java model cache
  */
 public class IntrospectionCache {
 
@@ -38,7 +38,7 @@ public class IntrospectionCache {
     /**
      * Instantiates a new Introspection cache.
      *
-     * @param beanClass the bean class
+     * @param beanClass the model class
      */
     private IntrospectionCache(Class<?> beanClass) {
 
@@ -85,7 +85,7 @@ public class IntrospectionCache {
     /**
      * For class.
      *
-     * @param beanClass the bean class
+     * @param beanClass the model class
      * @return the introspection cache
      */
     public static IntrospectionCache forClass(Class<?> beanClass) {

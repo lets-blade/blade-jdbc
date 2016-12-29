@@ -1,6 +1,6 @@
 package com.blade.jdbc.utils;
 
-import com.blade.jdbc.pager.PageRow;
+import com.blade.jdbc.model.PageRow;
 
 import java.util.ArrayList;
 import java.util.Collection;

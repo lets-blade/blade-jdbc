@@ -1,8 +1,8 @@
 package com.blade.jdbc;
 
-import com.blade.jdbc.pager.PageRow;
-import com.blade.jdbc.pager.Paginator;
-import com.blade.jdbc.persistence.Take;
+import com.blade.jdbc.model.PageRow;
+import com.blade.jdbc.model.Paginator;
+import com.blade.jdbc.core.Take;
 import com.blade.jdbc.tx.AtomTx;
 
 import java.io.Serializable;
