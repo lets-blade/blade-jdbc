@@ -4,7 +4,7 @@ import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.blade.jdbc.ds.DataSourceFactory;
 import com.blade.jdbc.pager.Paginator;
 import com.blade.jdbc.ActiveRecord;
-import com.blade.jdbc.SampleActiveRecord;
+import com.blade.jdbc.ar.SampleActiveRecord;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.Test;
@@ -75,7 +75,6 @@ public class ActiveRecordTest {
 
         Paginator<Person> page = activeRecord.page(new Person(), 2, 10);
         System.out.println(page);
-
 
     }
 }

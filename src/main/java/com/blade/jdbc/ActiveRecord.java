@@ -17,7 +17,7 @@ public interface ActiveRecord {
      * @param entity
      * @return
      */
-    Long insert(Object entity);
+    <T extends Serializable> T insert(Object entity);
 
     /**
      * 插入一条记录 自动处理主键
@@ -25,7 +25,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return long long
      */
-    Long insert(Criteria criteria);
+    <T extends Serializable> T insert(Criteria criteria);
 
     /**
      * 保存一条记录，不处理主键

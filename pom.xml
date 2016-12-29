@@ -19,7 +19,6 @@
 		<hikaricp.version>2.4.1</hikaricp.version>
 		<druid.version>1.0.24</druid.version>
 		<slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
-		<redis.version>2.9.0</redis.version>
 		<fastjson.version>1.2.16</fastjson.version>
 	</properties>
 
@@ -29,6 +28,21 @@
 			<groupId>org.sql2o</groupId>
 			<artifactId>sql2o</artifactId>
 			<version>1.6.0-RC3</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>3.0.7.RELEASE</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>1.8.9</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>

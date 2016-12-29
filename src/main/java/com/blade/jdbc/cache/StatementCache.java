@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.blade.jdbc.utils.Util;
+import com.blade.jdbc.utils.Utils;
 
 public enum StatementCache {
 	INSTANCE;
@@ -37,7 +37,7 @@ public enum StatementCache {
 		if (stmsMap != null) { // Close prepared statements to release cursors
 								// on connection pools
 			for (PreparedStatement stmt : stmsMap.values()) {
-				Util.closeQuietly(stmt);
+				Utils.closeQuietly(stmt);
 			}
 		}
 	}

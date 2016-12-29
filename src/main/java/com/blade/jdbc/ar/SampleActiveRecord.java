@@ -1,11 +1,14 @@
-package com.blade.jdbc;
+package com.blade.jdbc.ar;
 
+import com.blade.jdbc.ActiveRecord;
+import com.blade.jdbc.Base;
 import com.blade.jdbc.pager.PageRow;
 import com.blade.jdbc.pager.Paginator;
 import com.blade.jdbc.persistence.*;
 import com.blade.jdbc.tx.AtomTx;
 import com.blade.jdbc.utils.NameUtils;
 import com.blade.jdbc.utils.StringUtils;
+import com.blade.jdbc.utils.Utils;
 import org.sql2o.Connection;
 import org.sql2o.Sql2o;
 
@@ -51,7 +54,7 @@ public class SampleActiveRecord implements ActiveRecord {
      * @param criteria the criteria
      * @return long long
      */
-    private Long insert(Object entity, Criteria criteria) {
+    private <T extends Serializable> T insert(Object entity, Criteria criteria) {
         Class<?> entityClass = SqlAssembleUtils.getEntityClass(entity, criteria);
         NameHandler handler = this.getNameHandler();
         String pkValue = handler.getPKValue(entityClass, this.dialect);
@@ -66,17 +69,17 @@ public class SampleActiveRecord implements ActiveRecord {
             this.getNameHandler());
 
         try (Connection con = sql2o.open()){
-            return (Long) con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().getKey();
+            return (T)con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().getKey();
         }
     }
 
     @Override
-    public Long insert(Object entity) {
+    public <T extends Serializable> T insert(Object entity) {
         return this.insert(entity, null);
     }
 
     @Override
-    public Long insert(Criteria criteria) {
+    public <T extends Serializable> T insert(Criteria criteria) {
         return this.insert(null, criteria);
     }
 
@@ -85,7 +88,7 @@ public class SampleActiveRecord implements ActiveRecord {
         final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(entity, null,
             this.getNameHandler());
         try (Connection con = sql2o.beginTransaction()){
-            con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getKey();
+            con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true);
         }
     }
 
@@ -94,7 +97,7 @@ public class SampleActiveRecord implements ActiveRecord {
         final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(null, criteria,
             this.getNameHandler());
         try (Connection con = sql2o.beginTransaction()){
-            con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getKey();
+            con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true);
         }
     }
 
@@ -318,7 +321,7 @@ public class SampleActiveRecord implements ActiveRecord {
     @Override
     public <T> Paginator<T> page(T entity, PageRow pageRow) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(entity, null, this.getNameHandler());
-        String countSql = this.getCountSql(boundSql.getSql());
+        String countSql = Utils.getCountSql(boundSql.getSql());
 
         Paginator<T> paginator;
 
@@ -327,7 +330,7 @@ public class SampleActiveRecord implements ActiveRecord {
 
             paginator = new Paginator<>(total, pageRow.getPage(), pageRow.getLimit());
 
-            String sql = this.getPageSql(boundSql.getSql(), pageRow);
+            String sql = Utils.getPageSql(boundSql.getSql(), dialect, pageRow);
             List<?> list = con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeAndFetch(entity.getClass());
             if(null != list){
                 paginator.setList((List<T>) list);
@@ -345,7 +348,7 @@ public class SampleActiveRecord implements ActiveRecord {
     @Override
     public <T> Paginator<T> page(Criteria criteria, PageRow pageRow) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(null, criteria, this.getNameHandler());
-        String countSql = this.getCountSql(boundSql.getSql());
+        String countSql = Utils.getCountSql(boundSql.getSql());
 
         Paginator<T> paginator = null;
 
@@ -354,7 +357,7 @@ public class SampleActiveRecord implements ActiveRecord {
 
             paginator = new Paginator<>(total, pageRow.getPage(), pageRow.getLimit());
 
-            String sql = this.getPageSql(boundSql.getSql(), pageRow);
+            String sql = Utils.getPageSql(boundSql.getSql(), dialect, pageRow);
             List<?> list = con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeAndFetch(criteria.getEntityClass());
             if(null != list){
                 paginator.setList((List<T>) list);
@@ -362,42 +365,6 @@ public class SampleActiveRecord implements ActiveRecord {
         }
 
         return paginator;
-    }
-
-
-
-    /**
-     * 获取总数sql - 如果要支持其他数据库，修改这里就可以
-     *
-     * @param sql
-     * @return
-     */
-    private String getCountSql(String sql) {
-        return "select count(0) from (" + sql + ") tmp_count";
-    }
-
-    /**
-     * 获取分页查询sql
-     *
-     * @param sql
-     * @param pageRow
-     * @return
-     */
-    private String getPageSql(String sql, PageRow pageRow) {
-        StringBuilder pageSql = new StringBuilder(200);
-        if ("mysql".equalsIgnoreCase(dialect)) {
-            pageSql.append(sql);
-            pageSql.append(" limit ");
-            pageSql.append(pageRow.getOffSet());
-            pageSql.append(",");
-            pageSql.append(pageRow.getLimit());
-        } else if ("oracle".equalsIgnoreCase(dialect)) {
-            pageSql.append("select * from ( select rownum num,temp.* from (");
-            pageSql.append(sql);
-            pageSql.append(") temp where rownum <= ").append(pageRow.getLimit());
-            pageSql.append(") where num > ").append(pageRow.getOffSet());
-        }
-        return pageSql.toString();
     }
 
     /**

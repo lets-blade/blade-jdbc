@@ -1,12 +1,14 @@
 package com.blade.jdbc.utils;
 
+import com.blade.jdbc.pager.PageRow;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class Util {
+public class Utils {
 	
 	/**
      * Returns true if value is either null or it's String representation is blank.
@@ -220,11 +222,44 @@ public class Util {
         } catch (Exception ignore) {}
     }
 
-	public static int getSqlMarks(String querySql) {
-		if(querySql.indexOf("?") == -1){
-			return 0;
-		}
-		return querySql.split("\\?").length;
+
+
+	/**
+	 * 获取总数sql - 如果要支持其他数据库，修改这里就可以
+	 *
+	 * @param sql
+	 * @return
+	 */
+	public static String getCountSql(String sql) {
+		return "select count(0) from (" + sql + ") tmp_count";
 	}
+
+
+
+	/**
+	 * 获取分页查询sql
+	 *
+	 * @param sql
+	 * @param pageRow
+	 * @return
+	 */
+	public static String getPageSql(String sql, String dialect, PageRow pageRow) {
+		StringBuilder pageSql = new StringBuilder(200);
+		if ("mysql".equalsIgnoreCase(dialect)) {
+			pageSql.append(sql);
+			pageSql.append(" limit ");
+			pageSql.append(pageRow.getOffSet());
+			pageSql.append(",");
+			pageSql.append(pageRow.getLimit());
+		} else if ("oracle".equalsIgnoreCase(dialect)) {
+			pageSql.append("select * from ( select rownum num,temp.* from (");
+			pageSql.append(sql);
+			pageSql.append(") temp where rownum <= ").append(pageRow.getLimit());
+			pageSql.append(") where num > ").append(pageRow.getOffSet());
+		}
+		return pageSql.toString();
+	}
+
+
 	
 }
