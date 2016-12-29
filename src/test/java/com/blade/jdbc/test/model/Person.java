@@ -1,4 +1,4 @@
-package com.blade.jdbc.test;
+package com.blade.jdbc.test.model;
 
 import com.blade.jdbc.annotation.Table;
 
