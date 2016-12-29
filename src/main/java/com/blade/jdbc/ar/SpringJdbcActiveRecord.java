@@ -49,14 +49,14 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
      * @param criteria the criteria
      * @return long long
      */
-    private <T extends Serializable> T insert(Object entity, Criteria criteria) {
+    private <T extends Serializable> T insert(Object entity, Take criteria) {
         Class<?> entityClass = SqlAssembleUtils.getEntityClass(entity, criteria);
         NameHandler handler = this.getNameHandler();
         String pkValue = handler.getPKValue(entityClass, this.dialect);
         if (!Utils.blank(pkValue)) {
             String primaryName = handler.getPKName(entityClass);
             if (criteria == null) {
-                criteria = Criteria.create(entityClass);
+                criteria = Take.create(entityClass);
             }
             criteria.setPKValueName(NameUtils.getCamelName(primaryName), pkValue);
         }
@@ -85,7 +85,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public Long insert(Criteria criteria) {
+    public Long insert(Take criteria) {
         return this.insert(null, criteria);
     }
 
@@ -97,14 +97,14 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public void save(Criteria criteria) {
+    public void save(Take criteria) {
         final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(null, criteria,
                 this.getNameHandler());
         jdbcTemplate.update(boundSql.getSql(), boundSql.getParams().toArray());
     }
 
     @Override
-    public int update(Criteria criteria) {
+    public int update(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildUpdateSql(null, criteria, this.getNameHandler());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams().toArray());
     }
@@ -116,7 +116,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int delete(Criteria criteria) {
+    public int delete(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildDeleteSql(null, criteria, this.getNameHandler());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams().toArray());
     }
@@ -142,7 +142,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> List<T> list(Criteria criteria) {
+    public <T> List<T> list(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(null, criteria, this.getNameHandler());
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
                 this.getRowMapper(criteria.getEntityClass()));
@@ -176,7 +176,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
 
 
     @Override
-    public <T> List<T> list(T entity, Criteria criteria) {
+    public <T> List<T> list(T entity, Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(entity, criteria, this.getNameHandler());
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
                 this.getRowMapper(entity.getClass()));
@@ -200,7 +200,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int count(Object entity, Criteria criteria) {
+    public int count(Object entity, Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildCountSql(entity, criteria, this.getNameHandler());
         return jdbcTemplate.queryForInt(boundSql.getSql(), boundSql.getParams().toArray());
     }
@@ -212,7 +212,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int count(Criteria criteria) {
+    public int count(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildCountSql(null, criteria, this.getNameHandler());
         return jdbcTemplate.queryForInt(boundSql.getSql(), boundSql.getParams().toArray());
     }
@@ -230,12 +230,12 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T byId(Criteria criteria, Serializable pk) {
+    public <T> T byId(Take criteria, Serializable pk) {
         return null;
     }
 
     /*@Override
-    public <T> T get(Criteria criteria, Long id) {
+    public <T> T get(Take criteria, Long id) {
         BoundSql boundSql = SqlAssembleUtils
                 .buildByIdSql(null, id, criteria, this.getNameHandler());
 
@@ -262,7 +262,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T one(Criteria criteria) {
+    public <T> T one(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(null, criteria, this.getNameHandler());
         //采用list方式查询，当记录不存在时返回null而不会抛出异常
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
@@ -303,12 +303,12 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> Paginator<T> page(Criteria criteria, int page, int limit, String orderBy) {
+    public <T> Paginator<T> page(Take criteria, int page, int limit, String orderBy) {
         return null;
     }
 
     @Override
-    public <T> Paginator<T> page(Criteria criteria, PageRow pageRow) {
+    public <T> Paginator<T> page(Take criteria, PageRow pageRow) {
         return null;
     }
 

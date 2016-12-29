@@ -1,6 +1,7 @@
 package com.blade.jdbc.persistence;
 
 import com.blade.jdbc.exceptions.AssistantException;
+import com.blade.jdbc.pager.PageRow;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +10,7 @@ import java.util.List;
 /**
  * 条件操作
  */
-public class Criteria {
+public class Take {
 
     /** 操作的实体类 */
     private Class<?>        entityClass;
@@ -29,12 +30,14 @@ public class Criteria {
     /** where标识 */
     private boolean         isWhere = false;
 
+    private PageRow         pageRow;
+
     /**
      * constructor
      *
      * @param clazz
      */
-    public Criteria(Class<?> clazz) {
+    public Take(Class<?> clazz) {
         this.entityClass = clazz;
         this.autoFields = new ArrayList<AutoField>();
         this.orderByFields = new ArrayList<AutoField>();
@@ -46,8 +49,8 @@ public class Criteria {
      * @param clazz
      * @return
      */
-    public static Criteria create(Class<?> clazz) {
-        return new Criteria(clazz);
+    public static Take create(Class<?> clazz) {
+        return new Take(clazz);
     }
 
     /**
@@ -56,7 +59,7 @@ public class Criteria {
      * @param field
      * @return
      */
-    public Criteria include(String... field) {
+    public Take include(String... field) {
         if (this.includeFields == null) {
             this.includeFields = new ArrayList<String>();
         }
@@ -70,7 +73,7 @@ public class Criteria {
      * @param field
      * @return
      */
-    public Criteria exclude(String... field) {
+    public Take exclude(String... field) {
         if (this.excludeFields == null) {
             this.excludeFields = new ArrayList<String>();
         }
@@ -84,7 +87,7 @@ public class Criteria {
      * @param field the field
      * @return
      */
-    public Criteria asc(String... field) {
+    public Take asc(String... field) {
         for (String f : field) {
             AutoField autoField = this.buildAutoFields(f, null, "asc", AutoField.ORDER_BY_FIELD,
                 null);
@@ -99,7 +102,7 @@ public class Criteria {
      * @param field the field
      * @return
      */
-    public Criteria desc(String... field) {
+    public Take desc(String... field) {
         for (String f : field) {
             AutoField autoField = this.buildAutoFields(f, null, "desc", AutoField.ORDER_BY_FIELD,
                 null);
@@ -115,7 +118,7 @@ public class Criteria {
      * @param value the value
      * @return
      */
-    public Criteria set(String fieldName, Object value) {
+    public Take set(String fieldName, Object value) {
         AutoField autoField = this.buildAutoFields(fieldName, null, "=", AutoField.UPDATE_FIELD,
             value);
         this.autoFields.add(autoField);
@@ -129,7 +132,7 @@ public class Criteria {
      * @param valueName
      * @return
      */
-    public Criteria setPKValueName(String pkName, String valueName) {
+    public Take setPKValueName(String pkName, String valueName) {
         AutoField autoField = this.buildAutoFields(pkName, null, "=", AutoField.PK_VALUE_NAME,
             valueName);
         this.autoFields.add(autoField);
@@ -143,7 +146,7 @@ public class Criteria {
      * @param values
      * @return
      */
-    public Criteria and(String fieldName, Object... values) {
+    public Take and(String fieldName, Object... values) {
         this.and(fieldName, "=", values);
         return this;
     }
@@ -156,54 +159,54 @@ public class Criteria {
      * @param values
      * @return
      */
-    public Criteria and(String fieldName, String fieldOperator, Object... values) {
+    public Take and(String fieldName, String fieldOperator, Object... values) {
         AutoField autoField = this.buildAutoFields(fieldName, "and", fieldOperator,
             AutoField.WHERE_FIELD, values);
         this.autoFields.add(autoField);
         return this;
     }
 
-    public Criteria like(String fieldName, String value) {
+    public Take like(String fieldName, String value) {
         return this.and(fieldName, "like", value);
     }
 
-    public Criteria between(String fieldName, Object a, Object b) {
+    public Take between(String fieldName, Object a, Object b) {
         return this.and(fieldName, "between", a, b);
     }
 
-    public Criteria notBetween(String fieldName, Object a, Object b) {
+    public Take notBetween(String fieldName, Object a, Object b) {
         return this.and(fieldName, "not between", a, b);
     }
 
-    public Criteria gt(String fieldName, Object value) {
+    public Take gt(String fieldName, Object value) {
         return this.and(fieldName, ">", value);
     }
 
-    public Criteria gtE(String fieldName, Object value) {
+    public Take gtE(String fieldName, Object value) {
         return this.and(fieldName, ">=", value);
     }
 
-    public Criteria lt(String fieldName, Object value) {
+    public Take lt(String fieldName, Object value) {
         return this.and(fieldName, "<", value);
     }
 
-    public Criteria ltE(String fieldName, Object value) {
+    public Take ltE(String fieldName, Object value) {
         return this.and(fieldName, "<=", value);
     }
 
-    public Criteria eq(String fieldName, Object value) {
+    public Take eq(String fieldName, Object value) {
         return this.and(fieldName, "=", value);
     }
 
-    public Criteria notEq(String fieldName, Object value) {
+    public Take notEq(String fieldName, Object value) {
         return this.and(fieldName, "<>", value);
     }
 
-    public Criteria in(String fieldName, Object... values) {
+    public Take in(String fieldName, Object... values) {
         return this.and(fieldName, "in", values);
     }
 
-    public Criteria notIn(String fieldName, Object... values) {
+    public Take notIn(String fieldName, Object... values) {
         return this.and(fieldName, "not in", values);
     }
 
@@ -214,7 +217,7 @@ public class Criteria {
      * @param values
      * @return
      */
-    public Criteria or(String fieldName, Object... values) {
+    public Take or(String fieldName, Object... values) {
         this.or(fieldName, "=", values);
         return this;
     }
@@ -227,7 +230,7 @@ public class Criteria {
      * @param values
      * @return
      */
-    public Criteria or(String fieldName, String fieldOperator, Object... values) {
+    public Take or(String fieldName, String fieldOperator, Object... values) {
         AutoField autoField = this.buildAutoFields(fieldName, "or", fieldOperator,
             AutoField.WHERE_FIELD, values);
         this.autoFields.add(autoField);
@@ -242,7 +245,7 @@ public class Criteria {
      * @param values the values
      * @return
      */
-    public Criteria where(String fieldName, String fieldOperator, Object... values) {
+    public Take where(String fieldName, String fieldOperator, Object... values) {
         if (this.isWhere) {
             throw new AssistantException("There can be only one 'where'!");
         }
@@ -251,6 +254,15 @@ public class Criteria {
         this.autoFields.add(autoField);
         this.isWhere = true;
         return this;
+    }
+
+    public Take page(int page, int limit, String orderby){
+        this.pageRow = new PageRow(page, limit, orderby);
+        return this;
+    }
+
+    public Take page(int page, int limit){
+        return this.page(page, limit, null);
     }
 
     public Class<?> getEntityClass() {

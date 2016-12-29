@@ -54,14 +54,14 @@ public class SampleActiveRecord implements ActiveRecord {
      * @param criteria the criteria
      * @return long long
      */
-    private <T extends Serializable> T insert(Object entity, Criteria criteria) {
+    private <T extends Serializable> T insert(Object entity, Take criteria) {
         Class<?> entityClass = SqlAssembleUtils.getEntityClass(entity, criteria);
         NameHandler handler = this.getNameHandler();
         String pkValue = handler.getPKValue(entityClass, this.dialect);
         if (StringUtils.isNotBlank(pkValue)) {
             String primaryName = handler.getPKName(entityClass);
             if (criteria == null) {
-                criteria = Criteria.create(entityClass);
+                criteria = Take.create(entityClass);
             }
             criteria.setPKValueName(NameUtils.getCamelName(primaryName), pkValue);
         }
@@ -79,7 +79,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T extends Serializable> T insert(Criteria criteria) {
+    public <T extends Serializable> T insert(Take criteria) {
         return this.insert(null, criteria);
     }
 
@@ -93,7 +93,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public void save(Criteria criteria) {
+    public void save(Take criteria) {
         final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(null, criteria,
             this.getNameHandler());
         try (Connection con = sql2o.beginTransaction()){
@@ -102,7 +102,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int update(Criteria criteria) {
+    public int update(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildUpdateSql(null, criteria, this.getNameHandler());
         try (Connection con = sql2o.beginTransaction()){
             return con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
@@ -118,7 +118,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int delete(Criteria criteria) {
+    public int delete(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildDeleteSql(null, criteria, this.getNameHandler());
         try (Connection con = sql2o.beginTransaction()){
             return con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
@@ -151,7 +151,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> List<T> list(Criteria criteria) {
+    public <T> List<T> list(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(null, criteria, this.getNameHandler());
         try (Connection con = sql2o.open()){
             List<?> list = con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeAndFetch(criteria.getEntityClass());
@@ -192,7 +192,7 @@ public class SampleActiveRecord implements ActiveRecord {
 
 
     @Override
-    public <T> List<T> list(T entity, Criteria criteria) {
+    public <T> List<T> list(T entity, Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(entity, criteria, this.getNameHandler());
         try (Connection con = sql2o.open()){
             List<?> list = con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeAndFetch(entity.getClass());
@@ -227,7 +227,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int count(Object entity, Criteria criteria) {
+    public int count(Object entity, Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildCountSql(entity, criteria, this.getNameHandler());
         try (Connection con = sql2o.open()){
             return con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeScalar(Integer.class);
@@ -243,7 +243,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int count(Criteria criteria) {
+    public int count(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildCountSql(null, criteria, this.getNameHandler());
         try (Connection con = sql2o.open()){
             return con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeScalar(Integer.class);
@@ -259,7 +259,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T byId(Criteria criteria, Serializable pk) {
+    public <T> T byId(Take criteria, Serializable pk) {
         BoundSql boundSql = SqlAssembleUtils.buildByIdSql(null, pk, criteria, this.getNameHandler());
         try (Connection con = sql2o.open()){
             Object o = con.createQuery(boundSql.getSql()).withParams(pk).executeAndFetchFirst(criteria.getEntityClass());
@@ -277,7 +277,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T one(Criteria criteria) {
+    public <T> T one(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(null, criteria, this.getNameHandler());
         try (Connection con = sql2o.open()){
             Object o = con.createQuery(boundSql.getSql()).withParams(boundSql.getParams().toArray()).executeAndFetchFirst(criteria.getEntityClass());
@@ -314,7 +314,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> Paginator<T> page(Criteria criteria, int page, int limit, String orderBy) {
+    public <T> Paginator<T> page(Take criteria, int page, int limit, String orderBy) {
         return this.page(criteria, new PageRow(page, limit, orderBy));
     }
 
@@ -346,7 +346,7 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> Paginator<T> page(Criteria criteria, PageRow pageRow) {
+    public <T> Paginator<T> page(Take criteria, PageRow pageRow) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(null, criteria, this.getNameHandler());
         String countSql = Utils.getCountSql(boundSql.getSql());
 

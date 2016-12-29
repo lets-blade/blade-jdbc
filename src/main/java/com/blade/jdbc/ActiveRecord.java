@@ -2,7 +2,7 @@ package com.blade.jdbc;
 
 import com.blade.jdbc.pager.PageRow;
 import com.blade.jdbc.pager.Paginator;
-import com.blade.jdbc.persistence.Criteria;
+import com.blade.jdbc.persistence.Take;
 import com.blade.jdbc.tx.AtomTx;
 
 import java.io.Serializable;
@@ -25,7 +25,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return long long
      */
-    <T extends Serializable> T insert(Criteria criteria);
+    <T extends Serializable> T insert(Take criteria);
 
     /**
      * 保存一条记录，不处理主键
@@ -39,14 +39,14 @@ public interface ActiveRecord {
      *
      * @param criteria the criteria
      */
-    void save(Criteria criteria);
+    void save(Take criteria);
 
     /**
      * 根据Criteria更新
      *
      * @param criteria the criteria
      */
-    int update(Criteria criteria);
+    int update(Take criteria);
 
     /**
      * 根据实体更新
@@ -60,7 +60,7 @@ public interface ActiveRecord {
      *
      * @param criteria the criteria
      */
-    int delete(Criteria criteria);
+    int delete(Take criteria);
 
     /**
      * 删除记录 此方法会以实体中不为空的字段为条件
@@ -91,7 +91,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return list
      */
-    <T> List<T> list(Criteria criteria);
+    <T> List<T> list(Take criteria);
 
     /**
      * 根据sql查询List<Map>数据
@@ -129,7 +129,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return the list
      */
-    <T> List<T> list(T entity, Criteria criteria);
+    <T> List<T> list(T entity, Take criteria);
 
     /**
      * 查询返回map
@@ -165,7 +165,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return int int
      */
-    int count(Criteria criteria);
+    int count(Take criteria);
 
     /**
      * 查询记录数
@@ -174,7 +174,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return int int
      */
-    int count(Object entity, Criteria criteria);
+    int count(Object entity, Take criteria);
 
     /**
      * 根据主键得到记录
@@ -194,7 +194,7 @@ public interface ActiveRecord {
      * @param pk
      * @return t
      */
-    <T> T byId(Criteria criteria, Serializable pk);
+    <T> T byId(Take criteria, Serializable pk);
 
     /**
      * 查询单个记录
@@ -212,7 +212,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return t t
      */
-    <T> T one(Criteria criteria);
+    <T> T one(Take criteria);
 
     /**
      *
@@ -272,7 +272,7 @@ public interface ActiveRecord {
      * @param <T>
      * @return
      */
-    <T> Paginator<T> page(Criteria criteria, int page, int limit, String orderBy);
+    <T> Paginator<T> page(Take criteria, int page, int limit, String orderBy);
 
     /**
      * 分页查询
@@ -282,6 +282,6 @@ public interface ActiveRecord {
      * @param <T>
      * @return
      */
-    <T> Paginator<T> page(Criteria criteria, PageRow pageRow);
+    <T> Paginator<T> page(Take criteria, PageRow pageRow);
 
 }

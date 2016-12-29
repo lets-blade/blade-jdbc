@@ -5,7 +5,7 @@ import com.blade.jdbc.ds.DataSourceFactory;
 import com.blade.jdbc.pager.Paginator;
 import com.blade.jdbc.ActiveRecord;
 import com.blade.jdbc.ar.SampleActiveRecord;
-import com.blade.jdbc.persistence.Criteria;
+import com.blade.jdbc.persistence.Take;
 import com.blade.jdbc.test.model.Person;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -80,7 +80,7 @@ public class ActiveRecordTest {
 
     @Test
     public void testCriteriaList(){
-        Criteria criteria = new Criteria(Person.class);
+        Take criteria = new Take(Person.class);
         criteria.like("name", "Me%");
         List<Person> persons = activeRecord.list(criteria);
         LOGGER.info(persons.toString());

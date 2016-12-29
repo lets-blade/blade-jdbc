@@ -30,7 +30,7 @@ public class SqlAssembleUtils {
      * @param criteria
      * @return
      */
-    public static Class<?> getEntityClass(Object entity, Criteria criteria) {
+    public static Class<?> getEntityClass(Object entity, Take criteria) {
         return entity == null ? criteria.getEntityClass() : entity.getClass();
     }
 
@@ -42,7 +42,7 @@ public class SqlAssembleUtils {
      * @param nameHandler 名称转换处理器
      * @return bound sql
      */
-    public static BoundSql buildInsertSql(Object entity, Criteria criteria, NameHandler nameHandler) {
+    public static BoundSql buildInsertSql(Object entity, Take criteria, NameHandler nameHandler) {
 
         Class<?> entityClass = getEntityClass(entity, criteria);
         List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
@@ -103,7 +103,7 @@ public class SqlAssembleUtils {
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildUpdateSql(Object entity, Criteria criteria, NameHandler nameHandler) {
+    public static BoundSql buildUpdateSql(Object entity, Take criteria, NameHandler nameHandler) {
 
         Class<?> entityClass = getEntityClass(entity, criteria);
         List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
@@ -322,7 +322,7 @@ public class SqlAssembleUtils {
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildDeleteSql(Object entity, Criteria criteria, NameHandler nameHandler) {
+    public static BoundSql buildDeleteSql(Object entity, Take criteria, NameHandler nameHandler) {
 
         Class<?> entityClass = getEntityClass(entity, criteria);
         List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
@@ -352,7 +352,7 @@ public class SqlAssembleUtils {
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildByIdSql(Class<?> clazz, Serializable pk, Criteria criteria,
+    public static BoundSql buildByIdSql(Class<?> clazz, Serializable pk, Take criteria,
                                         NameHandler nameHandler) {
 
         Class<?> entityClass = (clazz == null ? criteria.getEntityClass() : clazz);
@@ -376,7 +376,7 @@ public class SqlAssembleUtils {
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildQuerySql(Object entity, Criteria criteria, NameHandler nameHandler) {
+    public static BoundSql buildQuerySql(Object entity, Take criteria, NameHandler nameHandler) {
 
         Class<?> entityClass = getEntityClass(entity, criteria);
 
@@ -415,7 +415,7 @@ public class SqlAssembleUtils {
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildListSql(Object entity, Criteria criteria, NameHandler nameHandler) {
+    public static BoundSql buildListSql(Object entity, Take criteria, NameHandler nameHandler) {
 
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(entity, criteria, nameHandler);
 
@@ -446,7 +446,7 @@ public class SqlAssembleUtils {
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildCountSql(Object entity, Criteria criteria, NameHandler nameHandler) {
+    public static BoundSql buildCountSql(Object entity, Take criteria, NameHandler nameHandler) {
 
         Class<?> entityClass = getEntityClass(entity, criteria);
         List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
