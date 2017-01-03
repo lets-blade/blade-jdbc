@@ -27,25 +27,25 @@ public class SqlAssembleUtils {
      * 获取实体类对象
      * 
      * @param entity
-     * @param criteria
+     * @param take
      * @return
      */
-    public static Class<?> getEntityClass(Object entity, Take criteria) {
-        return entity == null ? criteria.getEntityClass() : entity.getClass();
+    public static Class<?> getEntityClass(Object entity, Take take) {
+        return entity == null ? take.getEntityClass() : entity.getClass();
     }
 
     /**
      * 构建insert语句
      *
      * @param entity 实体映射对象
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler 名称转换处理器
      * @return bound sql
      */
-    public static BoundSql buildInsertSql(Object entity, Take criteria, NameHandler nameHandler) {
+    public static BoundSql buildInsertSql(Object entity, Take take, NameHandler nameHandler) {
 
-        Class<?> entityClass = getEntityClass(entity, criteria);
-        List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
+        Class<?> entityClass = getEntityClass(entity, take);
+        List<AutoField> autoFields = (take != null ? take.getAutoFields()
             : new ArrayList<>());
 
         List<AutoField> entityAutoField = getEntityAutoField(entity, AutoField.UPDATE_FIELD);
@@ -80,7 +80,7 @@ public class SqlAssembleUtils {
                 //参数直接append，传参方式会把值当成字符串造成无法调用序列的问题
                 args.append(value);
             } else {
-                args.append("?");
+                args.append(" ?");
                 params.add(value);
             }
             sql.append(",");
@@ -99,14 +99,14 @@ public class SqlAssembleUtils {
      * 构建更新sql
      *
      * @param entity the entity
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildUpdateSql(Object entity, Take criteria, NameHandler nameHandler) {
+    public static BoundSql buildUpdateSql(Object entity, Take take, NameHandler nameHandler) {
 
-        Class<?> entityClass = getEntityClass(entity, criteria);
-        List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
+        Class<?> entityClass = getEntityClass(entity, take);
+        List<AutoField> autoFields = (take != null ? take.getAutoFields()
             : new ArrayList<>());
 
         List<AutoField> entityAutoField = getEntityAutoField(entity, AutoField.UPDATE_FIELD);
@@ -146,11 +146,11 @@ public class SqlAssembleUtils {
             }
 
             //白名单 黑名单
-            if (criteria != null && !CollectionUtils.isEmpty(criteria.getIncludeFields())
-                && !criteria.getIncludeFields().contains(autoField.getName())) {
+            if (take != null && !CollectionUtils.isEmpty(take.getIncludeFields())
+                && !take.getIncludeFields().contains(autoField.getName())) {
                 continue;
-            } else if (criteria != null && !CollectionUtils.isEmpty(criteria.getExcludeFields())
-                       && criteria.getExcludeFields().contains(autoField.getName())) {
+            } else if (take != null && !CollectionUtils.isEmpty(take.getExcludeFields())
+                       && take.getExcludeFields().contains(autoField.getName())) {
                 continue;
             }
 
@@ -159,7 +159,7 @@ public class SqlAssembleUtils {
                 if (null == autoField.getValues() || autoField.getValues().length == 0 || autoField.getValues()[0] == null) {
                     sql.append("null");
                 } else {
-                    sql.append("?");
+                    sql.append(" ?");
                     params.add(autoField.getValues()[0]);
                 }
                 sql.append(",");
@@ -304,7 +304,7 @@ public class SqlAssembleUtils {
      * @param nameHandler
      * @return
      */
-    public static BoundSql buildDeleteSql(Class<?> clazz, Long id, NameHandler nameHandler) {
+    public static BoundSql buildDeleteSql(Class<?> clazz, Serializable id, NameHandler nameHandler) {
 
         List<Object> params = new ArrayList<Object>();
         params.add(id);
@@ -318,14 +318,14 @@ public class SqlAssembleUtils {
      * 构建删除sql
      *
      * @param entity the entity
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildDeleteSql(Object entity, Take criteria, NameHandler nameHandler) {
+    public static BoundSql buildDeleteSql(Object entity, Take take, NameHandler nameHandler) {
 
-        Class<?> entityClass = getEntityClass(entity, criteria);
-        List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
+        Class<?> entityClass = getEntityClass(entity, take);
+        List<AutoField> autoFields = (take != null ? take.getAutoFields()
             : new ArrayList<>());
 
         List<AutoField> entityAutoField = getEntityAutoField(entity, AutoField.WHERE_FIELD);
@@ -348,19 +348,19 @@ public class SqlAssembleUtils {
      *
      * @param clazz the clazz
      * @param pk the id
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildByIdSql(Class<?> clazz, Serializable pk, Take criteria,
+    public static BoundSql buildByIdSql(Class<?> clazz, Serializable pk, Take take,
                                         NameHandler nameHandler) {
 
-        Class<?> entityClass = (clazz == null ? criteria.getEntityClass() : clazz);
+        Class<?> entityClass = (clazz == null ? take.getEntityClass() : clazz);
         String tableName = nameHandler.getTableName(entityClass);
         String primaryName = nameHandler.getPKName(entityClass);
         String columns = SqlAssembleUtils.buildColumnSql(entityClass, nameHandler,
-                criteria == null ? null : criteria.getIncludeFields(), criteria == null ? null
-                        : criteria.getExcludeFields());
+                take == null ? null : take.getIncludeFields(), take == null ? null
+                        : take.getExcludeFields());
         String sql = "select " + columns + " from " + tableName + " where " + primaryName + " = ?";
         List<Object> params = new ArrayList<>();
         params.add(pk);
@@ -372,15 +372,15 @@ public class SqlAssembleUtils {
      * 按设置的条件构建查询sql
      *
      * @param entity the entity
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildQuerySql(Object entity, Take criteria, NameHandler nameHandler) {
+    public static BoundSql buildQuerySql(Object entity, Take take, NameHandler nameHandler) {
 
-        Class<?> entityClass = getEntityClass(entity, criteria);
+        Class<?> entityClass = getEntityClass(entity, take);
 
-        List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
+        List<AutoField> autoFields = (take != null ? take.getAutoFields()
             : new ArrayList<>());
 
         String tableName = nameHandler.getTableName(entityClass);
@@ -390,13 +390,13 @@ public class SqlAssembleUtils {
         autoFields.addAll(entityAutoField);
 
         String columns = SqlAssembleUtils.buildColumnSql(entityClass, nameHandler,
-                criteria == null ? null : criteria.getIncludeFields(), criteria == null ? null
-                        : criteria.getExcludeFields());
+                take == null ? null : take.getIncludeFields(), take == null ? null
+                        : take.getExcludeFields());
         StringBuilder querySql = new StringBuilder("select " + columns + " from ");
         querySql.append(tableName);
 
         List<Object> params = Collections.EMPTY_LIST;
-        if (!CollectionUtils.isEmpty(autoFields)) {
+        if ( null != take && take.hasWhere() || autoFields.size() > 0 ) {
             querySql.append(" where ");
 
             BoundSql boundSql = SqlAssembleUtils.builderWhereSql(autoFields, nameHandler);
@@ -411,17 +411,17 @@ public class SqlAssembleUtils {
      * 构建列表查询sql
      *
      * @param entity the entity
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildListSql(Object entity, Take criteria, NameHandler nameHandler) {
+    public static BoundSql buildListSql(Object entity, Take take, NameHandler nameHandler) {
 
-        BoundSql boundSql = SqlAssembleUtils.buildQuerySql(entity, criteria, nameHandler);
+        BoundSql boundSql = SqlAssembleUtils.buildQuerySql(entity, take, nameHandler);
 
         StringBuilder sb = new StringBuilder(" order by ");
-        if (criteria != null) {
-            for (AutoField autoField : criteria.getOrderByFields()) {
+        if (take != null) {
+            for (AutoField autoField : take.getOrderByFields()) {
                 sb.append(nameHandler.getColumnName(autoField.getName())).append(" ")
                     .append(autoField.getFieldOperator()).append(",");
             }
@@ -442,14 +442,14 @@ public class SqlAssembleUtils {
      * 构建记录数查询sql
      *
      * @param entity the entity
-     * @param criteria the criteria
+     * @param take the take
      * @param nameHandler the name handler
      * @return bound sql
      */
-    public static BoundSql buildCountSql(Object entity, Take criteria, NameHandler nameHandler) {
+    public static BoundSql buildCountSql(Object entity, Take take, NameHandler nameHandler) {
 
-        Class<?> entityClass = getEntityClass(entity, criteria);
-        List<AutoField> autoFields = (criteria != null ? criteria.getAutoFields()
+        Class<?> entityClass = getEntityClass(entity, take);
+        List<AutoField> autoFields = (take != null ? take.getAutoFields()
             : new ArrayList<>());
 
         List<AutoField> entityAutoField = getEntityAutoField(entity, AutoField.WHERE_FIELD);

@@ -81,6 +81,13 @@ public class Take {
         return this;
     }
 
+    public Take orderby(String field){
+        AutoField autoField = this.buildAutoFields(field, null, "", AutoField.ORDER_BY_FIELD,
+                null);
+        this.orderByFields.add(autoField);
+
+        return this;
+    }
     /**
      * asc 排序属性
      *
@@ -285,6 +292,10 @@ public class Take {
         return orderByFields;
     }
 
+    public PageRow getPageRow() {
+        return pageRow;
+    }
+
     /**
      * 获取操作的字段
      *
@@ -299,7 +310,14 @@ public class Take {
         autoField.setValues(values);
         autoField.setType(type);
 
+        if(type == AutoField.WHERE_FIELD){
+            this.isWhere = true;
+        }
+
         return autoField;
     }
 
+    public boolean hasWhere() {
+        return isWhere;
+    }
 }

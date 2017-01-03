@@ -75,7 +75,7 @@ public interface ActiveRecord {
      * @param clazz the clazz
      * @param id the id
      */
-    int delete(Class<?> clazz, Long id);
+    int delete(Class<?> clazz, Serializable id);
 
     /**
      * 删除所有记录(TRUNCATE ddl权限)
@@ -88,10 +88,10 @@ public interface ActiveRecord {
      * 按设置的条件查询
      *
      * @param <T>  the type parameter
-     * @param criteria the criteria
+     * @param take the criteria
      * @return list
      */
-    <T> List<T> list(Take criteria);
+    <T extends Serializable> List<T> list(Take take);
 
     /**
      * 根据sql查询List<Map>数据
@@ -111,7 +111,7 @@ public interface ActiveRecord {
      * @param <T>
      * @return
      */
-    <T> List<T> list(String sql, Class<T> type, Object...args);
+    <T extends Serializable> List<T> list(String sql, Class<T> type, Object...args);
 
     /**
      * 查询列表
@@ -119,7 +119,7 @@ public interface ActiveRecord {
      * @param entity the entity
      * @return the list
      */
-    <T> List<T> list(T entity);
+    <T extends Serializable> List<T> list(T entity);
 
     /**
      * 查询列表
@@ -129,7 +129,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return the list
      */
-    <T> List<T> list(T entity, Take criteria);
+    <T extends Serializable> List<T> list(T entity, Take criteria);
 
     /**
      * 查询返回map
@@ -149,7 +149,7 @@ public interface ActiveRecord {
      * @param <T>
      * @return
      */
-    <T> T one(Class<T> type, String sql, Object...args);
+    <T extends Serializable> T one(Class<T> type, String sql, Object...args);
 
     /**
      * 查询记录数
@@ -184,7 +184,7 @@ public interface ActiveRecord {
      * @param pk
      * @return t
      */
-    <T> T byId(Class<T> clazz, Serializable pk);
+    <T extends Serializable> T byId(Class<T> clazz, Serializable pk);
 
     /**
      * 根据主键得到记录
@@ -194,7 +194,7 @@ public interface ActiveRecord {
      * @param pk
      * @return t
      */
-    <T> T byId(Take criteria, Serializable pk);
+    <T extends Serializable> T byId(Take criteria, Serializable pk);
 
     /**
      * 查询单个记录
@@ -203,7 +203,7 @@ public interface ActiveRecord {
      * @param entity the entity
      * @return t t
      */
-    <T> T one(T entity);
+    <T extends Serializable> T one(T entity);
 
     /**
      * 查询单个记录
@@ -212,7 +212,7 @@ public interface ActiveRecord {
      * @param criteria the criteria
      * @return t t
      */
-    <T> T one(Take criteria);
+    <T extends Serializable> T one(Take criteria);
 
     /**
      *
@@ -265,23 +265,10 @@ public interface ActiveRecord {
     /**
      * 分页查询
      *
-     * @param criteria
-     * @param page
-     * @param limit
-     * @param orderBy
+     * @param take
      * @param <T>
      * @return
      */
-    <T> Paginator<T> page(Take criteria, int page, int limit, String orderBy);
-
-    /**
-     * 分页查询
-     *
-     * @param criteria
-     * @param pageRow
-     * @param <T>
-     * @return
-     */
-    <T> Paginator<T> page(Take criteria, PageRow pageRow);
+    <T> Paginator<T> page(Take take);
 
 }

@@ -128,7 +128,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public int delete(Class<?> clazz, Long id) {
+    public int delete(Class<?> clazz, Serializable id) {
         BoundSql boundSql = SqlAssembleUtils.buildDeleteSql(clazz, id, this.getNameHandler());
         return jdbcTemplate.update(boundSql.getSql(), boundSql.getParams().toArray());
     }
@@ -142,7 +142,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> List<T> list(Take criteria) {
+    public <T extends Serializable> List<T> list(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(null, criteria, this.getNameHandler());
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
                 this.getRowMapper(criteria.getEntityClass()));
@@ -150,7 +150,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> List<T> list(String sql, Class<T> type, Object...args) {
+    public <T extends Serializable> List<T> list(String sql, Class<T> type, Object...args) {
         if(null == args){
             args = EMPTY;
         }
@@ -159,7 +159,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> List<T> list(T entity) {
+    public <T extends Serializable> List<T> list(T entity) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(entity, null, this.getNameHandler());
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
                 this.getRowMapper(entity.getClass()));
@@ -176,7 +176,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
 
 
     @Override
-    public <T> List<T> list(T entity, Take criteria) {
+    public <T extends Serializable> List<T> list(T entity, Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildListSql(entity, criteria, this.getNameHandler());
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
                 this.getRowMapper(entity.getClass()));
@@ -192,7 +192,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T one(Class<T> type, String sql, Object... args) {
+    public <T extends Serializable> T one(Class<T> type, String sql, Object... args) {
         if(null != args && args.length > 0){
             return jdbcTemplate.queryForObject(sql, args, type);
         }
@@ -218,7 +218,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T byId(Class<T> clazz, Serializable id) {
+    public <T extends Serializable> T byId(Class<T> clazz, Serializable id) {
         BoundSql boundSql = SqlAssembleUtils.buildByIdSql(clazz, id, null, this.getNameHandler());
 
         //采用list方式查询，当记录不存在时返回null而不会抛出异常
@@ -230,17 +230,17 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T byId(Take criteria, Serializable pk) {
+    public <T extends Serializable> T byId(Take criteria, Serializable pk) {
         return null;
     }
 
     /*@Override
-    public <T> T get(Take criteria, Long id) {
+    public <T extends Serializable> T get(Take criteria, Long id) {
         BoundSql boundSql = SqlAssembleUtils
                 .buildByIdSql(null, id, criteria, this.getNameHandler());
 
         //采用list方式查询，当记录不存在时返回null而不会抛出异常
-        List<T> list = (List<T>) jdbcTemplate.query(boundSql.getSql(),
+        List<T extends Serializable> list = (List<T>) jdbcTemplate.query(boundSql.getSql(),
                 this.getRowMapper(criteria.getEntityClass()), id);
         if (CollectionUtils.isEmpty(list)) {
             return null;
@@ -249,7 +249,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }*/
 
     @Override
-    public <T> T one(T entity) {
+    public <T extends Serializable> T one(T entity) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(entity, null, this.getNameHandler());
 
         //采用list方式查询，当记录不存在时返回null而不会抛出异常
@@ -262,7 +262,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> T one(Take criteria) {
+    public <T extends Serializable> T one(Take criteria) {
         BoundSql boundSql = SqlAssembleUtils.buildQuerySql(null, criteria, this.getNameHandler());
         //采用list方式查询，当记录不存在时返回null而不会抛出异常
         List<?> list = jdbcTemplate.query(boundSql.getSql(), boundSql.getParams().toArray(),
@@ -303,12 +303,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T> Paginator<T> page(Take criteria, int page, int limit, String orderBy) {
-        return null;
-    }
-
-    @Override
-    public <T> Paginator<T> page(Take criteria, PageRow pageRow) {
+    public <T> Paginator<T> page(Take take) {
         return null;
     }
 

@@ -2,10 +2,10 @@ package com.blade.jdbc.test;
 
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.blade.jdbc.ds.DataSourceFactory;
-import com.blade.jdbc.pager.Paginator;
+import com.blade.jdbc.model.Paginator;
 import com.blade.jdbc.ActiveRecord;
 import com.blade.jdbc.ar.SampleActiveRecord;
-import com.blade.jdbc.persistence.Take;
+import com.blade.jdbc.core.Take;
 import com.blade.jdbc.test.model.Person;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -98,6 +98,15 @@ public class ActiveRecordTest {
     public void testPage(){
         Paginator<Person> page = activeRecord.page(new Person(), 2, 10);
         LOGGER.info(page.toString());
+    }
+
+    @Test
+    public void testOr(){
+        Take take = new Take(Person.class);
+        take.eq("name", "Tarik");
+        take.or("last_name", "=", "Tarik");
+        int count = activeRecord.count(take);
+        LOGGER.info(count+"");
     }
 
 }
