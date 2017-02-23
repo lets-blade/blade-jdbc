@@ -111,7 +111,7 @@ public interface ActiveRecord {
      * @param <T>
      * @return
      */
-    <T extends Serializable> List<T> list(String sql, Class<T> type, Object...args);
+    <T extends Serializable> List<T> list(Class<T> type, String sql, Object... args);
 
     /**
      * 查询列表

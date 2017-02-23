@@ -150,7 +150,7 @@ public class SpringJdbcActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public <T extends Serializable> List<T> list(String sql, Class<T> type, Object...args) {
+    public <T extends Serializable> List<T> list(Class<T> type, String sql, Object... args) {
         if(null == args){
             args = EMPTY;
         }
