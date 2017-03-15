@@ -2,16 +2,16 @@ package com.blade.jdbc.ar;
 
 import com.blade.jdbc.ActiveRecord;
 import com.blade.jdbc.Base;
+import com.blade.jdbc.core.*;
 import com.blade.jdbc.model.PageRow;
 import com.blade.jdbc.model.Paginator;
-import com.blade.jdbc.core.*;
-import com.blade.jdbc.tx.AtomTx;
+import com.blade.jdbc.tx.JdbcTx;
+import com.blade.jdbc.tx.Tx;
 import com.blade.jdbc.utils.NameUtils;
 import com.blade.jdbc.utils.StringUtils;
 import com.blade.jdbc.utils.Utils;
 import org.sql2o.Connection;
 import org.sql2o.Sql2o;
-import org.sql2o.converters.Convert;
 
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -66,12 +66,32 @@ public class SampleActiveRecord implements ActiveRecord {
             }
             take.setPKValueName(NameUtils.getCamelName(primaryName), pkValue);
         }
-        final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(entity, take,
-            this.getNameHandler());
+
+        final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(entity, take, this.getNameHandler());
+
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            Object object = con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getKey();
-            return (T) object;
+        Object[] params = boundSql.getParams().toArray();
+        JdbcTx jdbcTx = Tx.jdbcTx();
+        if(null != jdbcTx){
+            Connection con = jdbcTx.getConnection();
+            try {
+                if(null != params && params.length > 0){
+                    return (T) con.createQuery(sql).withParams(params).executeUpdate().getKey();
+                } else {
+                    return (T) con.createQuery(sql).executeUpdate().getKey();
+                }
+            } catch (Exception e){
+                Tx.rollback();
+                return null;
+            }
+        } else {
+            try (Connection con = sql2o.beginTransaction()){
+                if(null != params && params.length > 0){
+                    return (T) con.createQuery(sql).withParams(params).executeUpdate().commit(true).getKey();
+                } else {
+                    return (T) con.createQuery(sql).executeUpdate().commit(true).getKey();
+                }
+            }
         }
     }
 
@@ -90,36 +110,77 @@ public class SampleActiveRecord implements ActiveRecord {
         final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(entity, null,
             this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true);
-        }
+
+        executeAtomic(sql, boundSql.getParams().toArray());
     }
 
     @Override
     public void save(Take take) {
-        final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(null, take,
-            this.getNameHandler());
+        final BoundSql boundSql = SqlAssembleUtils.buildInsertSql(null, take, this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true);
+        executeAtomic(sql, boundSql.getParams().toArray());
+    }
+
+    @Override
+    public <T extends Serializable> T saveOrUpdate(Object entity) {
+        if(null != entity){
+            int count = this.count(entity);
+            if(count == 0){
+                return this.insert(entity);
+            }
+            this.update(entity);
         }
+        return null;
+    }
+
+    @Override
+    public <T extends Serializable> T saveOrUpdate(Take take) {
+        if(null != take){
+            int count = this.count(take);
+            if(count == 0){
+                return this.insert(take);
+            }
+            this.update(take);
+        }
+        return null;
     }
 
     @Override
     public int update(Take take) {
         BoundSql boundSql = SqlAssembleUtils.buildUpdateSql(null, take, this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            return con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
-        }
+        return executeAtomic(sql, boundSql.getParams().toArray());
     }
 
     @Override
     public int update(Object entity) {
         BoundSql boundSql = SqlAssembleUtils.buildUpdateSql(entity, null, this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            return con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
+        return executeAtomic(sql, boundSql.getParams().toArray());
+    }
+
+    private int executeAtomic(String sql, Object[] params){
+        JdbcTx jdbcTx = Tx.jdbcTx();
+        if(null != jdbcTx){
+            Connection con = jdbcTx.getConnection();
+            try {
+                if(null != params && params.length > 0){
+                    return con.createQuery(sql).withParams(params).executeUpdate().getResult();
+                } else {
+                    return con.createQuery(sql).executeUpdate().getResult();
+                }
+            } catch (Exception e){
+                Tx.rollback();
+                return -1;
+            }
+        } else {
+            try (Connection con = sql2o.beginTransaction()){
+                if(null != params && params.length > 0){
+                    return con.createQuery(sql).withParams(params).executeUpdate().commit(true).getResult();
+                } else {
+                    return con.createQuery(sql).executeUpdate().commit(true).getResult();
+                }
+            }
         }
     }
 
@@ -127,36 +188,28 @@ public class SampleActiveRecord implements ActiveRecord {
     public int delete(Take take) {
         BoundSql boundSql = SqlAssembleUtils.buildDeleteSql(null, take, this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            return con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
-        }
+        return executeAtomic(sql, boundSql.getParams().toArray());
     }
 
     @Override
     public int delete(Object entity) {
         BoundSql boundSql = SqlAssembleUtils.buildDeleteSql(entity, null, this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            return con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
-        }
+        return executeAtomic(sql, boundSql.getParams().toArray());
     }
 
     @Override
     public int delete(Class<?> clazz, Serializable id) {
         BoundSql boundSql = SqlAssembleUtils.buildDeleteSql(clazz, id, this.getNameHandler());
         String sql = boundSql.getSql();
-        try (Connection con = sql2o.beginTransaction()){
-            return con.createQuery(sql).withParams(boundSql.getParams().toArray()).executeUpdate().commit(true).getResult();
-        }
+        return executeAtomic(sql, boundSql.getParams().toArray());
     }
 
     @Override
     public int deleteAll(Class<?> clazz) {
         String tableName = this.getNameHandler().getTableName(clazz);
         String sql = "TRUNCATE TABLE " + tableName;
-        try (Connection con = sql2o.beginTransaction()){
-           return con.createQuery(sql).executeUpdate().commit(true).getResult();
-        }
+        return executeAtomic(sql, null);
     }
 
     @Override
@@ -178,6 +231,21 @@ public class SampleActiveRecord implements ActiveRecord {
         while(sql.contains(" ?")){
             sql = sql.replaceFirst(" \\?", " :p" + pindex++);
         }
+        try (Connection con = sql2o.open()){
+            return con.createQuery(sql).withParams(args).executeAndFetch(type);
+        }
+    }
+
+    @Override
+    public <T extends Serializable> List<T> list(Class<T> type, String sql, PageRow pageRow, Object... args) {
+        if(null == args){
+            args = EMPTY;
+        }
+        int pindex = 1;
+        while(sql.contains(" ?")){
+            sql = sql.replaceFirst(" \\?", " :p" + pindex++);
+        }
+        sql = Utils.getPageSql(sql, dialect, pageRow);
         try (Connection con = sql2o.open()){
             return con.createQuery(sql).withParams(args).executeAndFetch(type);
         }
@@ -209,6 +277,22 @@ public class SampleActiveRecord implements ActiveRecord {
         }
     }
 
+    @Override
+    public List<Map<String, Object>> listMap(String sql, PageRow pageRow, Object... args) {
+        int pindex = 1;
+        while(sql.contains(" ?")){
+            sql = sql.replaceFirst(" \\?", " :p" + pindex++);
+        }
+        sql = Utils.getPageSql(sql, dialect, pageRow);
+        if(null != args && args.length > 0){
+            try (Connection con = sql2o.open()){
+                return con.createQuery(sql).withParams(args).executeAndFetchTable().asList();
+            }
+        }
+        try (Connection con = sql2o.open()){
+            return con.createQuery(sql).executeAndFetchTable().asList();
+        }
+    }
 
     @Override
     public <T extends Serializable> List<T> list(T entity, Take take) {
@@ -337,13 +421,6 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
-    public void run(AtomTx tx) {
-        try (Connection con = sql2o.open()){
-            tx.call(con);
-        }
-    }
-
-    @Override
     public <T> Paginator<T> page(T entity, int page, int limit) {
         return this.page(entity, new PageRow(page, limit));
     }
@@ -410,8 +487,22 @@ public class SampleActiveRecord implements ActiveRecord {
         return this.nameHandler;
     }
 
-    public Sql2o getSql2o() {
+    public Sql2o sql2o() {
         return sql2o;
+    }
+
+    @Override
+    public DataSource datasource() {
+        return sql2o.getDataSource();
+    }
+
+    @Override
+    public java.sql.Connection connection() {
+        try {
+            return sql2o.getDataSource().getConnection();
+        } catch (Exception e){
+            return null;
+        }
     }
 
     public SampleActiveRecord setSql2o(Sql2o sql2o) {

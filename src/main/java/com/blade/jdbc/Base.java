@@ -6,12 +6,16 @@ import javax.sql.DataSource;
 
 public final class Base {
 
+	public static Sql2o sql2o;
+
 	public static Sql2o open(String url, String user, String password) {
-		return new Sql2o(url, user, password);
+		sql2o = new Sql2o(url, user, password);
+		return sql2o;
 	}
 	
 	public static Sql2o open(DataSource dataSource) {
-		return new Sql2o(dataSource);
+		sql2o = new Sql2o(dataSource);
+		return sql2o;
 	}
 
 }

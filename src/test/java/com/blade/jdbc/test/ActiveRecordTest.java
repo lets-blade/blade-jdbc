@@ -2,11 +2,13 @@ package com.blade.jdbc.test;
 
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.blade.jdbc.ds.DataSourceFactory;
+import com.blade.jdbc.model.PageRow;
 import com.blade.jdbc.model.Paginator;
 import com.blade.jdbc.ActiveRecord;
 import com.blade.jdbc.ar.SampleActiveRecord;
 import com.blade.jdbc.core.Take;
 import com.blade.jdbc.test.model.Person;
+import com.blade.jdbc.tx.Tx;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.Before;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -79,7 +82,7 @@ public class ActiveRecordTest {
     }
 
     @Test
-    public void testCriteriaList(){
+    public void testTakeList(){
         Take criteria = new Take(Person.class);
         criteria.like("name", "Me%");
         List<Person> persons = activeRecord.list(criteria);
@@ -101,12 +104,46 @@ public class ActiveRecordTest {
     }
 
     @Test
+    public void testListPage(){
+        String sql = "select * from person";
+        List<Person> list = activeRecord.list(Person.class, sql, new PageRow(1, 10, "created_at desc"));
+        LOGGER.info(list.toString());
+    }
+
+    @Test
+    public void testIn1(){
+        List<Person> list = activeRecord.list(new Take(Person.class).in("id", 1, 2, 3));
+        LOGGER.info(list.toString());
+    }
+
+    @Test
+    public void testIn2(){
+        List<Integer> ids = new ArrayList<>();
+        ids.add(1);
+        ids.add(2);
+        ids.add(3);
+        List<Person> list = activeRecord.list(new Take(Person.class).in("id", ids));
+        LOGGER.info(list.toString());
+    }
+
+    @Test
     public void testOr(){
         Take take = new Take(Person.class);
         take.eq("name", "Tarik");
         take.or("last_name", "=", "Tarik");
         int count = activeRecord.count(take);
         LOGGER.info(count+"");
+    }
+
+    @Test
+    public void testTx(){
+        Person p1 = new Person();
+        p1.setLast_name("Hello44");
+        p1.setId(1);
+        Tx.begin();
+        int c = 1/0;
+        activeRecord.update(p1);
+        Tx.commit();
     }
 
 }

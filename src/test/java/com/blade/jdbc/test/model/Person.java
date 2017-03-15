@@ -2,6 +2,7 @@ package com.blade.jdbc.test.model;
 
 import com.blade.jdbc.annotation.Table;
 
+import javax.persistence.Column;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -15,50 +16,47 @@ public class Person implements Serializable {
     private String name;
     private String last_name;
     private Date dob;
-    private Date created_at;
+
+    @Column(name = "created_at")
+    private Date createdAt;
 
     public Integer getId() {
         return id;
     }
 
-    public Person setId(Integer id) {
+    public void setId(Integer id) {
         this.id = id;
-        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public Person setName(String name) {
+    public void setName(String name) {
         this.name = name;
-        return this;
     }
 
     public String getLast_name() {
         return last_name;
     }
 
-    public Person setLast_name(String last_name) {
+    public void setLast_name(String last_name) {
         this.last_name = last_name;
-        return this;
     }
 
     public Date getDob() {
         return dob;
     }
 
-    public Person setDob(Date dob) {
+    public void setDob(Date dob) {
         this.dob = dob;
-        return this;
     }
 
-    public Date getCreated_at() {
-        return created_at;
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
-    public Person setCreated_at(Date created_at) {
-        this.created_at = created_at;
-        return this;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }

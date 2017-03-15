@@ -209,8 +209,16 @@ public class Take {
         return this.and(fieldName, "<>", value);
     }
 
+    public <T> Take in(String fieldName, List<T> values) {
+        return this.and(fieldName, "in", values.toArray());
+    }
+
     public Take in(String fieldName, Object... values) {
         return this.and(fieldName, "in", values);
+    }
+
+    public <T> Take notIn(String fieldName, List<T> values) {
+        return this.notIn(fieldName, values.toArray());
     }
 
     public Take notIn(String fieldName, Object... values) {

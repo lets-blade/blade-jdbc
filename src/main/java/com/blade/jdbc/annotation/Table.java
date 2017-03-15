@@ -36,21 +36,4 @@ public @interface Table {
     
     String pk() default "id";
 
-    /** (Optional) The catalog of the table.
-     * <p> Defaults to the default catalog.
-     */
-    String catalog() default "";
-
-    /** (Optional) The schema of the table.
-     * <p> Defaults to the default schema for user.
-     */
-    String schema() default "";
-    
-    /**
-     * open the table query cache
-     * @return
-     */
-    boolean cached() default true;
-    
-    UniqueConstraint[] uniqueConstraints() default {};
 }

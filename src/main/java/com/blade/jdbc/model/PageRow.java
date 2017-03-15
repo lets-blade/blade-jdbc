@@ -10,11 +10,16 @@ public class PageRow implements Serializable {
 	private String orderBy;
 	
 	public PageRow(int page, int limit) {
-		this.page = page;
-		this.limit = limit;
+		this(page, limit, null);
 	}
 
 	public PageRow(int page, int limit, String orderBy) {
+		if(page < 0){
+			page = 1;
+		}
+		if(limit < 0){
+			limit = 10;
+		}
 		this.page = page;
 		this.limit = limit;
 		this.orderBy = orderBy;

@@ -13,3 +13,16 @@
 - 可无缝结合spring
 
 废话少说，上车请看 test code.
+
+## 更新日志
+
+### v0.1.6-alpha
+
+1. 取消Spring支持
+2. 添加返回 `Sql2o`, `DataSource`, `Connection` 对象
+3. 添加 `saveOrUpdate` 方法
+4. 添加查询列表可分页
+5. 添加 `in` 可传入 `List`
+6. 修复分页传入数据小于0
+7. 修复自定义列名bug
+8. 重写事务实现
