@@ -132,6 +132,7 @@ public class Paginator<T> implements Serializable {
 
     public void setList(List<T> list) {
         this.list = list;
+        this.total = list.size();
     }
 
     public List<T> getList() {
