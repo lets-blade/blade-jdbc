@@ -294,6 +294,18 @@ public interface ActiveRecord {
     <T> Paginator<T> page(T entity, PageRow pageRow);
 
     /**
+     * 根据sql分页查询
+     *
+     * @param sql
+     * @param pageRow
+     * @param <T>
+     * @return
+     */
+    Paginator<Map<String, Object>> page(String sql, PageRow pageRow, Object... args);
+
+    <T> Paginator<T> page(Class<T> type, String sql, PageRow pageRow, Object... args);
+
+    /**
      * 分页查询
      *
      * @param take

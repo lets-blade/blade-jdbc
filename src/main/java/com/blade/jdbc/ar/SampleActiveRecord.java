@@ -448,6 +448,44 @@ public class SampleActiveRecord implements ActiveRecord {
     }
 
     @Override
+    public Paginator<Map<String, Object>> page(String sql, PageRow pageRow, Object... params) {
+        String countSql = Utils.getCountSql(sql);
+
+        Paginator<Map<String, Object>> paginator;
+
+        try (Connection con = sql2o.open()) {
+            int total = con.createQuery(countSql).withParams(params).executeScalar(Integer.class);
+            paginator = new Paginator<>(total, pageRow.getPage(), pageRow.getLimit());
+
+            String esql = Utils.getPageSql(sql, dialect, pageRow);
+            List<Map<String, Object>> list = con.createQuery(esql).withParams(params).executeAndFetchTable().asList();
+            if (null != list) {
+                paginator.setList(list);
+            }
+        }
+        return paginator;
+    }
+
+    @Override
+    public <T> Paginator<T> page(Class<T> type, String sql, PageRow pageRow, Object... params) {
+        String countSql = Utils.getCountSql(sql);
+
+        Paginator<T> paginator;
+
+        try (Connection con = sql2o.open()) {
+            int total = con.createQuery(countSql).withParams(params).executeScalar(Integer.class);
+            paginator = new Paginator<>(total, pageRow.getPage(), pageRow.getLimit());
+
+            String esql = Utils.getPageSql(sql, dialect, pageRow);
+            List<T> list = con.createQuery(esql).withParams(params).executeAndFetch(type);
+            if (null != list) {
+                paginator.setList(list);
+            }
+        }
+        return paginator;
+    }
+
+    @Override
     public <T> Paginator<T> page(T entity, int page, int limit, String orderBy) {
         return this.page(entity, new PageRow(page, limit, orderBy));
     }
