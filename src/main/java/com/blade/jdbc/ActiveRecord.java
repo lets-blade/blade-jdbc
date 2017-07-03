@@ -21,10 +21,13 @@ public class ActiveRecord implements Serializable {
     private Map<String, Object> propertyAndValues = new TreeMap<>();
 
     @Transient
-    private Map<String, Object> whereValues = new TreeMap<>();
+    private Set<WhereParam> whereValues = new LinkedHashSet<>();
 
     @Transient
-    private Set<String> saveOrUpdateProperties = new LinkedHashSet<>();
+    private Set<String> saveOrUpdateProperties = new TreeSet<>();
+
+    @Transient
+    private String orderBy;
 
     public ActiveRecord() {
     }
@@ -36,7 +39,11 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> T where(String key, Object value) {
-        this.whereValues.put(key, value);
+        return this.where(key, "=", value);
+    }
+
+    public <T extends ActiveRecord> T where(String key, String opt, Object value) {
+        this.whereValues.add(WhereParam.builder().key(key).opt(opt).value(value).build());
         this.saveOrUpdateProperties.add(key);
         return (T) this;
     }
@@ -74,12 +81,12 @@ public class ActiveRecord implements Serializable {
         sb.append(" set ");
 
         final int[] pos = {1};
-        List<Object> list = this.parseWhere(pos, sb);
+        List<Object> list = this.parseSet(pos, sb);
 
-        sb.append("where ");
-        whereValues.forEach((k, value) -> {
-            sb.append(k).append(" = ").append(":p").append(pos[0]++).append(" and ");
-            list.add(value);
+        sb.append(" where ");
+        whereValues.forEach(where -> {
+            sb.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
+            list.add(where.getValue());
         });
 
         sql = sb.toString().replace(", where", " where");
@@ -94,11 +101,69 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    public <T extends ActiveRecord> List<T> findAll() {
-        String sql = "select * from " + getTableName();
+    public <T extends ActiveRecord> T orderBy(String orderBy) {
+        this.orderBy = orderBy;
+        return (T) this;
+    }
+
+    public <T extends ActiveRecord> T query(String sql, Object... args) {
         Class<T> type = (Class<T>) getClass();
         try (Connection con = sql2o.open()) {
-            return con.createQuery(sql)
+            this.cleanParam();
+            return con.createQuery(sql).withParams(args)
+                    .executeAndFetchFirst(type);
+        }
+    }
+
+    public <T extends ActiveRecord> List<T> queryAll(String sql, Object... args) {
+        Class<T> type = (Class<T>) getClass();
+        try (Connection con = sql2o.open()) {
+            this.cleanParam();
+            return con.createQuery(sql).withParams(args)
+                    .executeAndFetch(type);
+        }
+    }
+
+    public <T extends ActiveRecord> List<T> findAll() {
+        return this.findAll(null);
+    }
+
+    public <T extends ActiveRecord> List<T> findAll(OrderBy orderBy) {
+        StringBuilder sqlBuf = new StringBuilder("select * from " + getTableName());
+
+        int[] pos = {1};
+        List<Object> list = this.parseWhere(pos, sqlBuf);
+
+        if (!whereValues.isEmpty()) {
+            if (sqlBuf.indexOf(" where ") == -1) {
+                sqlBuf.append(" where ");
+            }
+            whereValues.forEach(where -> {
+                sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
+                list.add(where.getValue());
+            });
+        }
+
+        String sql = sqlBuf.toString();
+
+        sql = sql.replace(", where", " where");
+        if (sql.endsWith(" and ")) {
+            sql = sql.substring(0, sql.length() - 5);
+        }
+        if (sql.endsWith(", ")) {
+            sql = sql.substring(0, sql.length() - 2);
+        }
+
+        if (null != orderBy) {
+            sql += orderBy.getOrderBy();
+        }
+
+        Object[] args = list.toArray();
+
+        Class<T> type = (Class<T>) getClass();
+        try (Connection con = sql2o.open()) {
+            this.cleanParam();
+            return con.createQuery(sql).withParams(args)
                     .executeAndFetch(type);
         }
     }
@@ -107,9 +172,45 @@ public class ActiveRecord implements Serializable {
         String sql = "select * from " + getTableName() + " where " + getPk() + " = :p1";
         Class<T> type = (Class<T>) getClass();
         try (Connection con = sql2o.open()) {
+            this.cleanParam();
             return con.createQuery(sql)
                     .withParams(id)
                     .executeAndFetchFirst(type);
+        }
+    }
+
+    public long count() {
+        StringBuilder sqlBuf = new StringBuilder("select count(*) from " + getTableName());
+
+        int[] pos = {1};
+        List<Object> list = this.parseWhere(pos, sqlBuf);
+
+        if (!whereValues.isEmpty()) {
+            if (sqlBuf.indexOf(" where ") == -1) {
+                sqlBuf.append(" where ");
+            }
+            whereValues.forEach(where -> {
+                sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
+                list.add(where.getValue());
+            });
+        }
+
+        String sql = sqlBuf.toString();
+
+        sql = sql.replace(", where", " where");
+        if (sql.endsWith(" and ")) {
+            sql = sql.substring(0, sql.length() - 5);
+        }
+        if (sql.endsWith(", ")) {
+            sql = sql.substring(0, sql.length() - 2);
+        }
+
+        Object[] args = list.toArray();
+
+        try (Connection con = sql2o.open()) {
+            this.cleanParam();
+            return con.createQuery(sql).withParams(args)
+                    .executeAndFetchFirst(Long.class);
         }
     }
 
@@ -137,10 +238,17 @@ public class ActiveRecord implements Serializable {
         int[] pos = {1};
         List<Object> list = this.parseWhere(pos, sqlBuf);
 
-        sqlBuf.append(" where ");
-        whereValues.forEach((k, value) -> {
-            sqlBuf.append(k).append(" = ").append(":p").append(pos[0]++).append(" and ");
-            list.add(value);
+        if (whereValues.isEmpty()) {
+            throw new RuntimeException("Delete operation must take conditions.");
+        } else {
+            if (sqlBuf.indexOf(" where ") == -1) {
+                sqlBuf.append(" where ");
+            }
+        }
+
+        whereValues.forEach(where -> {
+            sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
+            list.add(where.getValue());
         });
 
         String sql = sqlBuf.toString();
@@ -155,16 +263,45 @@ public class ActiveRecord implements Serializable {
         try (Connection con = sql2o.open()) {
             con.createQuery(sql).withParams(args).executeUpdate();
         }
+        this.cleanParam();
     }
 
     public void delete(Serializable pk) {
-        whereValues.put(getPk(), pk);
+        whereValues.add(WhereParam.builder().key(getPk()).opt("=").value(pk).build());
         this.delete();
     }
 
     public void delete(String field, Object value) {
-        whereValues.put(field, value);
+        whereValues.add(WhereParam.builder().key(field).opt("=").value(value).build());
         this.delete();
+    }
+
+    private void cleanParam() {
+        this.whereValues.clear();
+        this.propertyAndValues.clear();
+        this.saveOrUpdateProperties.clear();
+        Stream.of(getClass().getDeclaredFields())
+                .filter(field -> null == field.getAnnotation(Transient.class))
+                .forEach(field -> Unchecked.wrap(() -> {
+                    field.setAccessible(true);
+                    field.set(this, null);
+                    return null;
+                }));
+    }
+
+    private List<Object> parseSet(int[] pos, StringBuilder sqlBuf) {
+        return Stream.of(getClass().getDeclaredFields())
+                .filter(field -> null == field.getAnnotation(Transient.class))
+                .filter(field -> null != Unchecked.wrap(() -> {
+                    field.setAccessible(true);
+                    return field.get(this);
+                }))
+                .map(field -> Unchecked.wrap(() -> {
+                    Object value = field.get(this);
+                    sqlBuf.append(field.getName()).append(" = ").append(":p").append(pos[0]++).append(", ");
+                    return value;
+                }))
+                .collect(Collectors.toList());
     }
 
     private List<Object> parseWhere(int[] pos, StringBuilder sqlBuf) {
@@ -175,8 +312,11 @@ public class ActiveRecord implements Serializable {
                     return field.get(this);
                 }))
                 .map(field -> Unchecked.wrap(() -> {
+                    if (sqlBuf.indexOf(" where ") == -1) {
+                        sqlBuf.append(" where ");
+                    }
                     Object value = field.get(this);
-                    sqlBuf.append(field.getName()).append(" = ").append(":p").append(pos[0]++).append(", ");
+                    sqlBuf.append(field.getName()).append(" = ").append(":p").append(pos[0]++).append(" and ");
                     return value;
                 }))
                 .collect(Collectors.toList());
