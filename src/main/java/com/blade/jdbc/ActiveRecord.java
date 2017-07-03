@@ -7,7 +7,10 @@ import org.sql2o.Connection;
 import org.sql2o.Sql2o;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,24 +22,12 @@ public class ActiveRecord implements Serializable {
     protected Sql2o sql2o;
 
     @Transient
-    private Map<String, Object> propertyAndValues = new TreeMap<>();
-
-    @Transient
     private Set<WhereParam> whereValues = new LinkedHashSet<>();
 
     @Transient
     private Set<String> saveOrUpdateProperties = new TreeSet<>();
 
-    @Transient
-    private String orderBy;
-
     public ActiveRecord() {
-    }
-
-    public <T extends ActiveRecord> T set(String key, Object value) {
-        this.propertyAndValues.put(key, value);
-        this.saveOrUpdateProperties.add(key);
-        return (T) this;
     }
 
     public <T extends ActiveRecord> T where(String key, Object value) {
@@ -68,14 +59,22 @@ public class ActiveRecord implements Serializable {
         values.append(')');
 
         String sql = sb.append(values).toString().replace(", )", ")");
-        try (Connection con = sql2o.open()) {
+        try (Connection con = getConn()) {
             con.createQuery(sql).bind(this).executeUpdate();
         }
     }
 
-    public void update() {
-        String sql = null;
+    public void update(Serializable pk) {
+        this.update(getPk(), pk);
+    }
 
+    public void update(String field, Object value) {
+        this.whereValues.add(WhereParam.builder().key(field).opt("=").value(value).build());
+        this.update();
+    }
+
+    public void update() {
+        String sql;
         String tableName = getTableName();
         StringBuilder sb = new StringBuilder("update ");
         sb.append(tableName);
@@ -84,27 +83,35 @@ public class ActiveRecord implements Serializable {
         final int[] pos = {1};
         List<Object> list = this.parseSet(pos, sb);
 
-        sb.append(" where ");
+        sb.append("where ");
         whereValues.forEach(where -> {
             sb.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
             list.add(where.getValue());
         });
 
-        sql = sb.toString().replace(", where", " where");
+        sql = sb.toString().replace(", where ", " where ");
         if (sql.endsWith("and ")) {
             sql = sql.substring(0, sql.length() - 5);
         }
 
         Object[] args = list.toArray();
+        this.execute(sql, args);
+        this.cleanParam();
+    }
 
-        try (Connection con = sql2o.open()) {
+    private void execute(String sql, Object[] args) {
+        if (null == connectionThreadLocal) {
+            try (Connection con = sql2o.open()) {
+                con.createQuery(sql).withParams(args).executeUpdate();
+            }
+        } else {
+            Connection con = getConn();
             con.createQuery(sql).withParams(args).executeUpdate();
         }
     }
 
-    public <T extends ActiveRecord> T orderBy(String orderBy) {
-        this.orderBy = orderBy;
-        return (T) this;
+    private Connection getConn() {
+        return null != connectionThreadLocal.get() ? connectionThreadLocal.get() : sql2o.open();
     }
 
     public <T extends ActiveRecord> T query(String sql, Object... args) {
@@ -305,15 +312,12 @@ public class ActiveRecord implements Serializable {
 
         Object[] args = list.toArray();
 
-        try (Connection con = sql2o.open()) {
-            con.createQuery(sql).withParams(args).executeUpdate();
-        }
+        this.execute(sql, args);
         this.cleanParam();
     }
 
     public void delete(Serializable pk) {
-        whereValues.add(WhereParam.builder().key(getPk()).opt("=").value(pk).build());
-        this.delete();
+        this.delete(getPk(), pk);
     }
 
     public void delete(String field, Object value) {
@@ -321,9 +325,25 @@ public class ActiveRecord implements Serializable {
         this.delete();
     }
 
+    private static final ThreadLocal<Connection> connectionThreadLocal = new ThreadLocal<>();
+
+    public void atomic(Tx tx) {
+        try {
+            connectionThreadLocal.set(sql2o.beginTransaction());
+            try (Connection con = connectionThreadLocal.get()) {
+                tx.run();
+                con.commit();
+            }
+        } catch (RuntimeException e) {
+            connectionThreadLocal.get().rollback();
+            throw e;
+        } finally {
+            connectionThreadLocal.remove();
+        }
+    }
+
     private void cleanParam() {
         this.whereValues.clear();
-        this.propertyAndValues.clear();
         this.saveOrUpdateProperties.clear();
         Stream.of(getClass().getDeclaredFields())
                 .filter(field -> null == field.getAnnotation(Transient.class))
