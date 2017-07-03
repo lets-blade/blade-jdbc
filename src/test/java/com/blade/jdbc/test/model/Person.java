@@ -1,16 +1,16 @@
 package com.blade.jdbc.test.model;
 
+import com.blade.jdbc.ActiveRecord;
 import com.blade.jdbc.annotation.Table;
 
 import javax.persistence.Column;
-import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by biezhi on 2016/12/25.
  */
-@Table(name = "person")
-public class Person implements Serializable {
+@Table(value = "person")
+public class Person extends ActiveRecord {
 
     private Integer id;
     private String name;
@@ -59,4 +59,5 @@ public class Person implements Serializable {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
 }

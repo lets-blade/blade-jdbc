@@ -1,12 +1,6 @@
 package com.blade.jdbc.utils;
 
-import com.blade.jdbc.model.PageRow;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class Utils {
 
@@ -245,38 +239,5 @@ public class Utils {
     public static String getCountSql(String sql) {
         return "select count(0) from (" + sql + ") tmp_count";
     }
-
-    /**
-     * 获取分页查询sql
-     *
-     * @param sql
-     * @param pageRow
-     * @return
-     */
-    public static String getPageSql(String sql, String dialect, PageRow pageRow) {
-        StringBuilder pageSql = new StringBuilder(200);
-        if ("mysql".equalsIgnoreCase(dialect)) {
-            pageSql.append(sql);
-            if (StringUtils.isNotBlank(pageRow.getOrderBy())) {
-                pageSql.append(" order by ");
-                pageSql.append(pageRow.getOrderBy());
-            }
-            pageSql.append(" limit ");
-            pageSql.append(pageRow.getOffSet());
-            pageSql.append(",");
-            pageSql.append(pageRow.getLimit());
-        } else if ("oracle".equalsIgnoreCase(dialect)) {
-            pageSql.append("select * from ( select rownum num,temp.* from (");
-            pageSql.append(sql);
-            if (StringUtils.isNotBlank(pageRow.getOrderBy())) {
-                pageSql.append(" order by ");
-                pageSql.append(pageRow.getOrderBy());
-            }
-            pageSql.append(") temp where rownum <= ").append(pageRow.getLimit());
-            pageSql.append(") where num > ").append(pageRow.getOffSet());
-        }
-        return pageSql.toString();
-    }
-
 
 }
