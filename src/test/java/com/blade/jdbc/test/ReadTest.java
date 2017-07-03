@@ -1,5 +1,6 @@
 package com.blade.jdbc.test;
 
+import com.blade.jdbc.Fields;
 import com.blade.jdbc.OrderBy;
 import com.blade.jdbc.test.model.User;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class ReadTest extends BaseTestCase {
         List<User> list = user.where("username", "jack").findAll();
         System.out.println(list);
 
-        list = user.findAll(OrderBy.desc("id"));
+        list = user.findAll(Fields.of("username"), OrderBy.desc("id"));
         System.out.println(list);
 
     }
@@ -74,6 +75,15 @@ public class ReadTest extends BaseTestCase {
 
     @Test
     public void test6() {
+        User user = new User();
+        user.setSql2o(sql2o);
+
+        System.out.println(user.query("select * from t_user order by id desc"));
+        System.out.println(user.query("select * from t_user where id = :p1", 1));
+    }
+
+    @Test
+    public void test7() {
         User user = new User();
         user.setSql2o(sql2o);
 

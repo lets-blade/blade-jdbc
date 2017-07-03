@@ -8,6 +8,7 @@ import org.sql2o.Sql2o;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -128,20 +129,17 @@ public class ActiveRecord implements Serializable {
         return this.findAll(null);
     }
 
-    public <T extends ActiveRecord> List<T> findAll(OrderBy orderBy) {
-        StringBuilder sqlBuf = new StringBuilder("select * from " + getTableName());
+    public <T extends ActiveRecord> List<T> findAll(Supplier<ConditionEnum>... conditions) {
+
+        String initSql = this.parseFieldsSql(conditions);
+
+        StringBuilder sqlBuf = new StringBuilder(initSql);
 
         int[] pos = {1};
         List<Object> list = this.parseWhere(pos, sqlBuf);
-
-        if (!whereValues.isEmpty()) {
-            if (sqlBuf.indexOf(" where ") == -1) {
-                sqlBuf.append(" where ");
-            }
-            whereValues.forEach(where -> {
-                sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
-                list.add(where.getValue());
-            });
+        List<Object> temp = andWhere(pos, sqlBuf);
+        if (null != temp) {
+            list.addAll(temp);
         }
 
         String sql = sqlBuf.toString();
@@ -154,8 +152,14 @@ public class ActiveRecord implements Serializable {
             sql = sql.substring(0, sql.length() - 2);
         }
 
+        String orderBy = this.parseOrderBySql(conditions);
         if (null != orderBy) {
-            sql += orderBy.getOrderBy();
+            sql += orderBy;
+        }
+
+        String limit = this.parseLimitBySql(conditions);
+        if (null != limit) {
+            sql += orderBy;
         }
 
         Object[] args = list.toArray();
@@ -166,6 +170,52 @@ public class ActiveRecord implements Serializable {
             return con.createQuery(sql).withParams(args)
                     .executeAndFetch(type);
         }
+    }
+
+    private String parseLimitBySql(Supplier<ConditionEnum>[] conditions) {
+        final String[] sql = {null};
+        if (null == conditions) {
+            return sql[0];
+        }
+        Stream.of(conditions)
+                .filter(conditionEnumSupplier -> conditionEnumSupplier.get().equals(ConditionEnum.LIMIT))
+                .findFirst()
+                .ifPresent(conditionEnumSupplier -> {
+                    Limit limit = (Limit) conditionEnumSupplier;
+                    sql[0] = " limit " + limit.getPage() + ", " + limit.getLimit();
+                });
+        return sql[0];
+    }
+
+    private String parseOrderBySql(Supplier<ConditionEnum>[] conditions) {
+        final String[] sql = {null};
+        if (null == conditions) {
+            return sql[0];
+        }
+        Stream.of(conditions)
+                .filter(conditionEnumSupplier -> conditionEnumSupplier.get().equals(ConditionEnum.ORDER_BY))
+                .findFirst()
+                .ifPresent(conditionEnumSupplier -> {
+                    OrderBy orderBy = (OrderBy) conditionEnumSupplier;
+                    sql[0] = " order by " + orderBy.getOrderBy();
+                });
+        return sql[0];
+    }
+
+    private String parseFieldsSql(Supplier<ConditionEnum>[] conditions) {
+        final String[] sql = {"select * from " + getTableName()};
+        if (null == conditions) {
+            return sql[0];
+        }
+        Stream.of(conditions)
+                .filter(conditionEnumSupplier -> conditionEnumSupplier.get().equals(ConditionEnum.FIELDS))
+                .findFirst()
+                .ifPresent(conditionEnumSupplier -> {
+                    Fields fields = (Fields) conditionEnumSupplier;
+                    Set<String> fieldsSet = fields.getFields();
+                    sql[0] = "select " + fieldsSet.stream().collect(Collectors.joining(",")) + " from " + getTableName();
+                });
+        return sql[0];
     }
 
     public <T extends ActiveRecord> T find(Serializable id) {
@@ -185,14 +235,9 @@ public class ActiveRecord implements Serializable {
         int[] pos = {1};
         List<Object> list = this.parseWhere(pos, sqlBuf);
 
-        if (!whereValues.isEmpty()) {
-            if (sqlBuf.indexOf(" where ") == -1) {
-                sqlBuf.append(" where ");
-            }
-            whereValues.forEach(where -> {
-                sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
-                list.add(where.getValue());
-            });
+        List<Object> temp = andWhere(pos, sqlBuf);
+        if (null != temp) {
+            list.addAll(temp);
         }
 
         String sql = sqlBuf.toString();
@@ -246,10 +291,10 @@ public class ActiveRecord implements Serializable {
             }
         }
 
-        whereValues.forEach(where -> {
-            sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
-            list.add(where.getValue());
-        });
+        List<Object> temp = andWhere(pos, sqlBuf);
+        if (null != temp) {
+            list.addAll(temp);
+        }
 
         String sql = sqlBuf.toString();
 
@@ -320,5 +365,20 @@ public class ActiveRecord implements Serializable {
                     return value;
                 }))
                 .collect(Collectors.toList());
+    }
+
+    private List<Object> andWhere(int[] pos, StringBuilder sqlBuf) {
+        if (!whereValues.isEmpty()) {
+            if (sqlBuf.indexOf(" where ") == -1) {
+                sqlBuf.append(" where ");
+            }
+            return whereValues.stream()
+                    .map(where -> {
+                        sqlBuf.append(where.getKey()).append(" " + where.getOpt() + " ").append(":p").append(pos[0]++).append(" and ");
+                        return where.getValue();
+                    })
+                    .collect(Collectors.toList());
+        }
+        return null;
     }
 }
