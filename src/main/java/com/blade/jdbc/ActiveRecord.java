@@ -42,7 +42,24 @@ public class ActiveRecord implements Serializable {
     }
 
     public void save() {
-        String sql = SqlBuilder.buildInsertSql(getClass());
+        String tableName = getTableName();
+
+        StringBuilder sb = new StringBuilder("insert into ");
+        sb.append(tableName);
+        sb.append(" (");
+
+        StringBuffer values = new StringBuffer(" values (");
+        Stream.of(getClass().getDeclaredFields())
+                .filter(field -> null == field.getAnnotation(Transient.class))
+                .forEach(field -> {
+                    sb.append(field.getName()).append(", ");
+                    values.append(':').append(field.getName()).append(", ");
+                });
+
+        sb.append(')');
+        values.append(')');
+
+        String sql = sb.append(values).toString().replace(", )", ")");
         try (Connection con = sql2o.open()) {
             con.createQuery(sql).bind(this).executeUpdate();
         }
@@ -138,6 +155,11 @@ public class ActiveRecord implements Serializable {
         try (Connection con = sql2o.open()) {
             con.createQuery(sql).withParams(args).executeUpdate();
         }
+    }
+
+    public void delete(Serializable pk) {
+        whereValues.put(getPk(), pk);
+        this.delete();
     }
 
     public void delete(String field, Object value) {

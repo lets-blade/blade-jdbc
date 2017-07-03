@@ -16,6 +16,7 @@ public class DeleteTest extends BaseTestCase {
         // delete from t_user where id = ?
         user.where("id", 44).delete();
         user.delete("id", 44);
+        user.delete(44);
 
     }
 
