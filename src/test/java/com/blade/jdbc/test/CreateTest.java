@@ -16,8 +16,6 @@ public class CreateTest extends BaseTestCase {
         user.setPassword("123556");
         user.setReal_name("杰克");
 
-        user.setSql2o(super.sql2o);
-
         // insert into t_user (username, password, real_name) values (?, ?, ?)
         user.save();
     }

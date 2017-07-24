@@ -11,7 +11,6 @@ public class TransactionTest extends BaseTestCase {
     @Test
     public void test1() {
         User user = new User();
-        user.setSql2o(sql2o);
 
         user.setPassword("51n2(S24cPc");
 

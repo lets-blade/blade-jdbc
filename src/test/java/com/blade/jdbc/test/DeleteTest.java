@@ -11,13 +11,17 @@ public class DeleteTest extends BaseTestCase {
     @Test
     public void test1() {
         User user = new User();
-        user.setSql2o(sql2o);
 
         // delete from t_user where id = ?
         user.where("id", 44).delete();
         user.delete("id", 44);
         user.delete(44);
+    }
 
+    @Test
+    public void test2() {
+        User user = new User();
+        user.delete();
     }
 
 }

@@ -16,7 +16,6 @@ public class UpdateTest extends BaseTestCase {
         user.setPassword("123556");
         user.setReal_name("杰克65");
 
-        user.setSql2o(super.sql2o);
         user.where("id", 42).update();
     }
 

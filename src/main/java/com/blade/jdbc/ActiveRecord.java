@@ -7,10 +7,7 @@ import org.sql2o.Connection;
 import org.sql2o.Sql2o;
 
 import java.io.Serializable;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,6 +27,13 @@ public class ActiveRecord implements Serializable {
     public ActiveRecord() {
     }
 
+    public Sql2o getSql2o() {
+        if (null != sql2o) {
+            return sql2o;
+        }
+        return Base.sql2o;
+    }
+
     public <T extends ActiveRecord> T where(String key, Object value) {
         return this.where(key, "=", value);
     }
@@ -38,6 +42,22 @@ public class ActiveRecord implements Serializable {
         this.whereValues.add(WhereParam.builder().key(key).opt(opt).value(value).build());
         this.saveOrUpdateProperties.add(key);
         return (T) this;
+    }
+
+    public <T extends ActiveRecord> T and(String key, Object value) {
+        return this.where(key, value);
+    }
+
+    public <T extends ActiveRecord> T and(String key, String opt, Object value) {
+        return this.where(key, opt, value);
+    }
+
+    public <T extends ActiveRecord> T or(String key, Object value) {
+        return this.or(key, "=", value);
+    }
+
+    public <T extends ActiveRecord> T or(String key, String opt, Object value) {
+        return this.where(" or " + key, opt, value);
     }
 
     public void save() {
@@ -74,13 +94,13 @@ public class ActiveRecord implements Serializable {
     }
 
     public void update() {
-        String sql;
-        String tableName = getTableName();
-        StringBuilder sb = new StringBuilder("update ");
+        String        sql;
+        String        tableName = getTableName();
+        StringBuilder sb        = new StringBuilder("update ");
         sb.append(tableName);
         sb.append(" set ");
 
-        final int[] pos = {1};
+        final int[]  pos  = {1};
         List<Object> list = this.parseSet(pos, sb);
 
         sb.append("where ");
@@ -89,7 +109,7 @@ public class ActiveRecord implements Serializable {
             list.add(where.getValue());
         });
 
-        sql = sb.toString().replace(", where ", " where ");
+        sql = sb.toString().replace(", where ", " where ").replace("and  or", "or");
         if (sql.endsWith("and ")) {
             sql = sql.substring(0, sql.length() - 5);
         }
@@ -101,7 +121,7 @@ public class ActiveRecord implements Serializable {
 
     private void execute(String sql, Object[] args) {
         if (null == connectionThreadLocal) {
-            try (Connection con = sql2o.open()) {
+            try (Connection con = getSql2o().open()) {
                 con.createQuery(sql).withParams(args).executeUpdate();
             }
         } else {
@@ -111,12 +131,12 @@ public class ActiveRecord implements Serializable {
     }
 
     private Connection getConn() {
-        return null != connectionThreadLocal.get() ? connectionThreadLocal.get() : sql2o.open();
+        return null != connectionThreadLocal.get() ? connectionThreadLocal.get() : getSql2o().open();
     }
 
     public <T extends ActiveRecord> T query(String sql, Object... args) {
         Class<T> type = (Class<T>) getClass();
-        try (Connection con = sql2o.open()) {
+        try (Connection con = getSql2o().open()) {
             this.cleanParam();
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(type);
@@ -125,7 +145,7 @@ public class ActiveRecord implements Serializable {
 
     public <T extends ActiveRecord> List<T> queryAll(String sql, Object... args) {
         Class<T> type = (Class<T>) getClass();
-        try (Connection con = sql2o.open()) {
+        try (Connection con = getSql2o().open()) {
             this.cleanParam();
             return con.createQuery(sql).withParams(args)
                     .executeAndFetch(type);
@@ -142,7 +162,7 @@ public class ActiveRecord implements Serializable {
 
         StringBuilder sqlBuf = new StringBuilder(initSql);
 
-        int[] pos = {1};
+        int[]        pos  = {1};
         List<Object> list = this.parseWhere(pos, sqlBuf);
         List<Object> temp = andWhere(pos, sqlBuf);
         if (null != temp) {
@@ -151,7 +171,7 @@ public class ActiveRecord implements Serializable {
 
         String sql = sqlBuf.toString();
 
-        sql = sql.replace(", where", " where");
+        sql = sql.replace(", where", " where").replace("and  or", "or");
         if (sql.endsWith(" and ")) {
             sql = sql.substring(0, sql.length() - 5);
         }
@@ -172,7 +192,7 @@ public class ActiveRecord implements Serializable {
         Object[] args = list.toArray();
 
         Class<T> type = (Class<T>) getClass();
-        try (Connection con = sql2o.open()) {
+        try (Connection con = getSql2o().open()) {
             this.cleanParam();
             return con.createQuery(sql).withParams(args)
                     .executeAndFetch(type);
@@ -218,7 +238,7 @@ public class ActiveRecord implements Serializable {
                 .filter(conditionEnumSupplier -> conditionEnumSupplier.get().equals(ConditionEnum.FIELDS))
                 .findFirst()
                 .ifPresent(conditionEnumSupplier -> {
-                    Fields fields = (Fields) conditionEnumSupplier;
+                    Fields      fields    = (Fields) conditionEnumSupplier;
                     Set<String> fieldsSet = fields.getFields();
                     sql[0] = "select " + fieldsSet.stream().collect(Collectors.joining(",")) + " from " + getTableName();
                 });
@@ -226,9 +246,9 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> T find(Serializable id) {
-        String sql = "select * from " + getTableName() + " where " + getPk() + " = :p1";
+        String   sql  = "select * from " + getTableName() + " where " + getPk() + " = :p1";
         Class<T> type = (Class<T>) getClass();
-        try (Connection con = sql2o.open()) {
+        try (Connection con = getSql2o().open()) {
             this.cleanParam();
             return con.createQuery(sql)
                     .withParams(id)
@@ -236,10 +256,37 @@ public class ActiveRecord implements Serializable {
         }
     }
 
+    public <T extends ActiveRecord> T findOneBySql(String sql, Object... params) {
+        int pos = 1;
+        while (sql.indexOf("?") != -1) {
+            sql = sql.replaceFirst("\\?", ":p" + pos);
+        }
+        Class<T> type = (Class<T>) getClass();
+        try (Connection con = getSql2o().open()) {
+            this.cleanParam();
+            return con.createQuery(sql)
+                    .withParams(params)
+                    .executeAndFetchFirst(type);
+        }
+    }
+
+    public <T extends ActiveRecord> List<T> findAllBySql(String sql, Object... params) {
+        int pos = 1;
+        while (sql.indexOf("?") != -1) {
+            sql = sql.replaceFirst("\\?", ":p" + pos);
+        }
+        Class<T> type = (Class<T>) getClass();
+        try (Connection con = getSql2o().open()) {
+            this.cleanParam();
+            return con.createQuery(sql).withParams(params)
+                    .executeAndFetch(type);
+        }
+    }
+
     public long count() {
         StringBuilder sqlBuf = new StringBuilder("select count(*) from " + getTableName());
 
-        int[] pos = {1};
+        int[]        pos  = {1};
         List<Object> list = this.parseWhere(pos, sqlBuf);
 
         List<Object> temp = andWhere(pos, sqlBuf);
@@ -249,7 +296,8 @@ public class ActiveRecord implements Serializable {
 
         String sql = sqlBuf.toString();
 
-        sql = sql.replace(", where", " where");
+        sql = sql.replace(", where", " where").replace("and  or", "or");
+
         if (sql.endsWith(" and ")) {
             sql = sql.substring(0, sql.length() - 5);
         }
@@ -259,7 +307,7 @@ public class ActiveRecord implements Serializable {
 
         Object[] args = list.toArray();
 
-        try (Connection con = sql2o.open()) {
+        try (Connection con = getSql2o().open()) {
             this.cleanParam();
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(Long.class);
@@ -268,7 +316,7 @@ public class ActiveRecord implements Serializable {
 
     private String getTableName() {
         Class<?> modelType = getClass();
-        Table table = modelType.getAnnotation(Table.class);
+        Table    table     = modelType.getAnnotation(Table.class);
         if (null != table) {
             return table.value().toLowerCase();
         }
@@ -277,7 +325,7 @@ public class ActiveRecord implements Serializable {
 
     private String getPk() {
         Class<?> modelType = getClass();
-        Table table = modelType.getAnnotation(Table.class);
+        Table    table     = modelType.getAnnotation(Table.class);
         if (null != table) {
             return table.pk().toLowerCase();
         }
@@ -287,7 +335,7 @@ public class ActiveRecord implements Serializable {
     public void delete() {
         StringBuilder sqlBuf = new StringBuilder("delete from " + getTableName());
 
-        int[] pos = {1};
+        int[]        pos  = {1};
         List<Object> list = this.parseWhere(pos, sqlBuf);
 
         if (whereValues.isEmpty()) {
@@ -305,7 +353,7 @@ public class ActiveRecord implements Serializable {
 
         String sql = sqlBuf.toString();
 
-        sql = sql.replace(", where", " where");
+        sql = sql.replace(", where", " where").replace("and  or", "or");
         if (sql.endsWith("and ")) {
             sql = sql.substring(0, sql.length() - 5);
         }
@@ -329,7 +377,7 @@ public class ActiveRecord implements Serializable {
 
     public void atomic(Tx tx) {
         try {
-            connectionThreadLocal.set(sql2o.beginTransaction());
+            connectionThreadLocal.set(getSql2o().beginTransaction());
             try (Connection con = connectionThreadLocal.get()) {
                 tx.run();
                 con.commit();
@@ -346,7 +394,7 @@ public class ActiveRecord implements Serializable {
         this.whereValues.clear();
         this.saveOrUpdateProperties.clear();
         Stream.of(getClass().getDeclaredFields())
-                .filter(field -> null == field.getAnnotation(Transient.class))
+                .filter(field -> Objects.isNull(field.getAnnotation(Transient.class)))
                 .forEach(field -> Unchecked.wrap(() -> {
                     field.setAccessible(true);
                     field.set(this, null);
@@ -371,7 +419,7 @@ public class ActiveRecord implements Serializable {
 
     private List<Object> parseWhere(int[] pos, StringBuilder sqlBuf) {
         return Stream.of(getClass().getDeclaredFields())
-                .filter(field -> null == field.getAnnotation(Transient.class))
+                .filter(field -> Objects.isNull(field.getAnnotation(Transient.class)))
                 .filter(field -> null != Unchecked.wrap(() -> {
                     field.setAccessible(true);
                     return field.get(this);
