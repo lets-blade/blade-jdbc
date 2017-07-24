@@ -1,7 +1,7 @@
 package com.blade.jdbc.test;
 
-import com.blade.jdbc.Fields;
-import com.blade.jdbc.OrderBy;
+import com.blade.jdbc.core.Fields;
+import com.blade.jdbc.core.OrderBy;
 import com.blade.jdbc.test.model.User;
 import org.junit.Test;
 
@@ -62,14 +62,14 @@ public class ReadTest extends BaseTestCase {
         User user = new User();
 
         System.out.println(user.queryAll("select * from t_user"));
-        System.out.println(user.queryAll("select * from t_user where id = :p1", 1));
+        System.out.println(user.queryAll("select * from t_user where id = ?", 1));
     }
 
     @Test
     public void test6() {
         User user = new User();
         System.out.println(user.query("select * from t_user order by id desc"));
-        System.out.println(user.query("select * from t_user where id = :p1", 1));
+        System.out.println(user.query("select * from t_user where id = ?", 1));
     }
 
     @Test
@@ -77,7 +77,7 @@ public class ReadTest extends BaseTestCase {
         User user = new User();
 
         System.out.println(user.query("select * from t_user order by id desc"));
-        System.out.println(user.query("select * from t_user where id = :p1", 1));
+        System.out.println(user.query("select * from t_user where id = ?", 1));
     }
 
     @Test
@@ -88,13 +88,4 @@ public class ReadTest extends BaseTestCase {
         System.out.println("count=" + count);
     }
 
-    @Test
-    public void test9() {
-        User user = new User();
-        User u    = user.findOneBySql("select * from t_user where username = ?", "jack");
-        System.out.println(u);
-
-        List<User> users = user.findAllBySql("select * from t_user ");
-        System.out.println(users);
-    }
 }

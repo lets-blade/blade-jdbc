@@ -1,6 +1,6 @@
 package com.blade.jdbc.test.model;
 
-import com.blade.jdbc.ActiveRecord;
+import com.blade.jdbc.core.ActiveRecord;
 import com.blade.jdbc.annotation.Table;
 import lombok.Data;
 

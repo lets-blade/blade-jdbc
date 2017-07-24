@@ -1,4 +1,4 @@
-package com.blade.jdbc;
+package com.blade.jdbc.core;
 
 /**
  * Created by biezhi on 03/07/2017.

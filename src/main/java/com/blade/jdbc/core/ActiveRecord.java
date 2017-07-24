@@ -1,7 +1,12 @@
-package com.blade.jdbc;
+package com.blade.jdbc.core;
 
+import com.blade.jdbc.Base;
 import com.blade.jdbc.annotation.Table;
 import com.blade.jdbc.annotation.Transient;
+import com.blade.jdbc.page.Page;
+import com.blade.jdbc.page.PageRow;
+import com.blade.jdbc.page.Pager;
+import com.blade.jdbc.utils.Unchecked;
 import lombok.Setter;
 import org.sql2o.Connection;
 import org.sql2o.Sql2o;
@@ -115,11 +120,19 @@ public class ActiveRecord implements Serializable {
         }
 
         Object[] args = list.toArray();
-        this.execute(sql, args);
+        this.invoke(sql, args);
         this.cleanParam();
     }
 
-    private void execute(String sql, Object[] args) {
+    public void execute(String sql, Object... params) {
+        int pos = 1;
+        while (sql.indexOf("?") != -1) {
+            sql = sql.replaceFirst("\\?", ":p" + pos);
+        }
+        invoke(sql, params);
+    }
+
+    private void invoke(String sql, Object[] args) {
         if (null == connectionThreadLocal) {
             try (Connection con = getSql2o().open()) {
                 con.createQuery(sql).withParams(args).executeUpdate();
@@ -135,6 +148,10 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> T query(String sql, Object... args) {
+        int pos = 1;
+        while (sql.indexOf("?") != -1) {
+            sql = sql.replaceFirst("\\?", ":p" + pos);
+        }
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
@@ -144,6 +161,10 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> List<T> queryAll(String sql, Object... args) {
+        int pos = 1;
+        while (sql.indexOf("?") != -1) {
+            sql = sql.replaceFirst("\\?", ":p" + pos);
+        }
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
@@ -169,24 +190,16 @@ public class ActiveRecord implements Serializable {
             list.addAll(temp);
         }
 
-        String sql = sqlBuf.toString();
-
-        sql = sql.replace(", where", " where").replace("and  or", "or");
-        if (sql.endsWith(" and ")) {
-            sql = sql.substring(0, sql.length() - 5);
-        }
-        if (sql.endsWith(", ")) {
-            sql = sql.substring(0, sql.length() - 2);
-        }
-
+        String sql     = this.sqlFilter(sqlBuf.toString());
         String orderBy = this.parseOrderBySql(conditions);
         if (null != orderBy) {
             sql += orderBy;
         }
 
-        String limit = this.parseLimitBySql(conditions);
+        PageRow pageRow = Pager.pageLocal.get();
+        String  limit   = this.parseLimitBySql(pageRow);
         if (null != limit) {
-            sql += orderBy;
+            sql += limit;
         }
 
         Object[] args = list.toArray();
@@ -199,19 +212,47 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    private String parseLimitBySql(Supplier<ConditionEnum>[] conditions) {
-        final String[] sql = {null};
-        if (null == conditions) {
-            return sql[0];
+    public <T extends ActiveRecord> Page<T> page(int page, int limit) {
+        return this.page(new PageRow(page, limit));
+    }
+
+    public <T extends ActiveRecord> Page<T> page(PageRow pageRow) {
+        return page(pageRow, null, null);
+    }
+
+    public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String sql, Object... params) {
+        Pager.pageLocal.set(pageRow);
+        int page  = pageRow.getPage();
+        int limit = pageRow.getLimit();
+        if (null != sql) {
+            int pos = 1;
+            while (sql.indexOf("?") != -1) {
+                sql = sql.replaceFirst("\\?", ":p" + pos);
+            }
+            if (null != params) {
+
+            }
         }
-        Stream.of(conditions)
-                .filter(conditionEnumSupplier -> conditionEnumSupplier.get().equals(ConditionEnum.LIMIT))
-                .findFirst()
-                .ifPresent(conditionEnumSupplier -> {
-                    Limit limit = (Limit) conditionEnumSupplier;
-                    sql[0] = " limit " + limit.getPage() + ", " + limit.getLimit();
-                });
-        return sql[0];
+        long    count = this.count(false);
+        List<T> list  = this.findAll();
+
+        Page<T> pageBean = new Page<>();
+        pageBean.setTotalRow(count);
+        pageBean.setRows(list);
+        pageBean.setPage(page);
+        pageBean.setPrevPage(page < 2 ? 1 : page - 1);
+        pageBean.setNextPage(page + 1);
+        pageBean.setTotalPages(count / limit + (count % limit != 0 ? 1 : 0));
+
+        Pager.pageLocal.remove();
+        return pageBean;
+    }
+
+    private String parseLimitBySql(PageRow pageRow) {
+        if (null == pageRow) {
+            return null;
+        }
+        return String.format(" limit %s, %s", pageRow.getOffset(), pageRow.getLimit());
     }
 
     private String parseOrderBySql(Supplier<ConditionEnum>[] conditions) {
@@ -256,34 +297,7 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    public <T extends ActiveRecord> T findOneBySql(String sql, Object... params) {
-        int pos = 1;
-        while (sql.indexOf("?") != -1) {
-            sql = sql.replaceFirst("\\?", ":p" + pos);
-        }
-        Class<T> type = (Class<T>) getClass();
-        try (Connection con = getSql2o().open()) {
-            this.cleanParam();
-            return con.createQuery(sql)
-                    .withParams(params)
-                    .executeAndFetchFirst(type);
-        }
-    }
-
-    public <T extends ActiveRecord> List<T> findAllBySql(String sql, Object... params) {
-        int pos = 1;
-        while (sql.indexOf("?") != -1) {
-            sql = sql.replaceFirst("\\?", ":p" + pos);
-        }
-        Class<T> type = (Class<T>) getClass();
-        try (Connection con = getSql2o().open()) {
-            this.cleanParam();
-            return con.createQuery(sql).withParams(params)
-                    .executeAndFetch(type);
-        }
-    }
-
-    public long count() {
+    private long count(boolean cleanParam) {
         StringBuilder sqlBuf = new StringBuilder("select count(*) from " + getTableName());
 
         int[]        pos  = {1};
@@ -294,24 +308,18 @@ public class ActiveRecord implements Serializable {
             list.addAll(temp);
         }
 
-        String sql = sqlBuf.toString();
-
-        sql = sql.replace(", where", " where").replace("and  or", "or");
-
-        if (sql.endsWith(" and ")) {
-            sql = sql.substring(0, sql.length() - 5);
-        }
-        if (sql.endsWith(", ")) {
-            sql = sql.substring(0, sql.length() - 2);
-        }
-
+        String   sql  = this.sqlFilter(sqlBuf.toString());
         Object[] args = list.toArray();
 
         try (Connection con = getSql2o().open()) {
-            this.cleanParam();
+            if (cleanParam) this.cleanParam();
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(Long.class);
         }
+    }
+
+    public long count() {
+        return this.count(true);
     }
 
     private String getTableName() {
@@ -360,7 +368,7 @@ public class ActiveRecord implements Serializable {
 
         Object[] args = list.toArray();
 
-        this.execute(sql, args);
+        this.invoke(sql, args);
         this.cleanParam();
     }
 
@@ -433,6 +441,17 @@ public class ActiveRecord implements Serializable {
                     return value;
                 }))
                 .collect(Collectors.toList());
+    }
+
+    private String sqlFilter(String sql) {
+        sql = sql.replace(", where", " where").replace("and  or", "or");
+        if (sql.endsWith(" and ")) {
+            sql = sql.substring(0, sql.length() - 5);
+        }
+        if (sql.endsWith(", ")) {
+            sql = sql.substring(0, sql.length() - 2);
+        }
+        return sql;
     }
 
     private List<Object> andWhere(int[] pos, StringBuilder sqlBuf) {

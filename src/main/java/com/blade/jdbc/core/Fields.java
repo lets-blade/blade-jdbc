@@ -1,4 +1,4 @@
-package com.blade.jdbc;
+package com.blade.jdbc.core;
 
 import java.util.Arrays;
 import java.util.Set;

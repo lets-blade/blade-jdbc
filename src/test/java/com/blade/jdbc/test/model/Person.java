@@ -1,9 +1,9 @@
 package com.blade.jdbc.test.model;
 
-import com.blade.jdbc.ActiveRecord;
+import com.blade.jdbc.annotation.Column;
+import com.blade.jdbc.core.ActiveRecord;
 import com.blade.jdbc.annotation.Table;
 
-import javax.persistence.Column;
 import java.util.Date;
 
 /**
@@ -13,9 +13,9 @@ import java.util.Date;
 public class Person extends ActiveRecord {
 
     private Integer id;
-    private String name;
-    private String last_name;
-    private Date dob;
+    private String  name;
+    private String  last_name;
+    private Date    dob;
 
     @Column(name = "created_at")
     private Date createdAt;
