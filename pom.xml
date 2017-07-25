@@ -23,6 +23,7 @@
             <email>biezhi.me@gmail.com</email>
         </developer>
     </developers>
+
     <scm>
         <connection>scm:git@github.com:biezhi/blade.git</connection>
         <developerConnection>scm:git@github.com:biezhi/blade.git</developerConnection>
