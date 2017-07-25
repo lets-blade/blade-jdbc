@@ -31,7 +31,8 @@ class SqlBuilder {
      * @param activeRecord ActiveRecord对象
      * @return 返回insert sql语句
      */
-    static String buildInsertSql(ActiveRecord activeRecord) {
+    static QueryMeta buildInsertSql(ActiveRecord activeRecord) {
+        QueryMeta     queryMeta = new QueryMeta();
         String        tableName = activeRecord.getTableName();
         StringBuilder sb        = new StringBuilder("insert into ");
         sb.append(tableName);
@@ -41,14 +42,17 @@ class SqlBuilder {
         Stream.of(activeRecord.getClass().getDeclaredFields())
                 .filter(field -> null == field.getAnnotation(Transient.class))
                 .forEach(field -> {
-                    sb.append(field.getName()).append(", ");
-                    values.append(':').append(field.getName()).append(", ");
+                    Pair<String, String> pair = getColumnName(field);
+                    sb.append(pair.getLeft()).append(", ");
+                    values.append(':').append(pair.getRight()).append(", ");
                 });
 
         sb.append(')');
         values.append(')');
 
-        return sb.append(values).toString().replace(", )", ")");
+        String sql = sb.append(values).toString().replace(", )", ")");
+        queryMeta.setSql(sql);
+        return queryMeta;
     }
 
     /**
@@ -362,7 +366,7 @@ class SqlBuilder {
         return new Pair<>(columnName, fieldName);
     }
 
-    private static void mapping(QueryMeta queryMeta, Class<?> modelType) {
+    public static void mapping(QueryMeta queryMeta, Class<?> modelType) {
         Stream.of(modelType.getDeclaredFields())
                 .filter(field -> null == field.getAnnotation(Transient.class))
                 .forEach(field -> {

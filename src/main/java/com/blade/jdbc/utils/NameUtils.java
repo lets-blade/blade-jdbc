@@ -7,7 +7,7 @@ public class NameUtils {
 
     /**
      * 首字母大写
-     * 
+     *
      * @param name
      * @return
      */
@@ -21,7 +21,7 @@ public class NameUtils {
 
     /**
      * 首字母小写
-     * 
+     *
      * @param name
      * @return
      */
@@ -35,7 +35,7 @@ public class NameUtils {
 
     /**
      * 转换成骆驼命名法返回
-     * 
+     *
      * @param name
      * @return
      */
@@ -72,29 +72,22 @@ public class NameUtils {
 
     /**
      * 将骆驼命名法反转成下划线返回
-     * 
+     *
      * @param name
      * @return
      */
     public static String getUnderlineName(String name) {
-
         if (StringUtils.isBlank(name)) {
             return null;
         }
-
         StringBuilder sb = new StringBuilder();
-
         for (int i = 0; i < name.length(); i++) {
-
             char c = name.charAt(i);
-
             if (i > 0 && Character.isUpperCase(c)) {
                 sb.append("_");
             }
-
             sb.append(c);
         }
-
         return sb.toString().toLowerCase();
     }
 
@@ -106,7 +99,7 @@ public class NameUtils {
      */
     public static String createUniqueFileName(String fileName) {
 
-        int index = fileName.lastIndexOf(".");
+        int    index  = fileName.lastIndexOf(".");
         String suffix = fileName.substring(index);
         String uqName = UUIDUtils.getUUID16() + suffix;
         return uqName;
@@ -114,15 +107,15 @@ public class NameUtils {
 
     /**
      * 在文件名后加上指定后缀，不包括后缀名
-     * 
+     *
      * @param fileName
      * @param endSuffix
      * @return
      */
     public static String createEndSuffixFileName(String fileName, String endSuffix) {
-        int index = fileName.lastIndexOf(".");
+        int    index       = fileName.lastIndexOf(".");
         String preFileName = fileName.substring(0, index);
-        String suffix = fileName.substring(index);
+        String suffix      = fileName.substring(index);
         return preFileName + endSuffix + suffix;
     }
 

@@ -29,7 +29,6 @@ public final class Base {
      *
      * @param supplier
      * @param <T>
-     * @return
      */
     public static <T> T atomic(Supplier<T> supplier) {
         T result = null;

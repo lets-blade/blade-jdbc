@@ -10,13 +10,13 @@ public class CreateTest extends BaseTestCase {
 
     @Test
     public void test1() {
-
         User user = new User();
         user.setUsername("jack");
         user.setPassword("123556");
         user.setRealName("杰克");
+        user.setAge(20);
 
-        // insert into t_user (username, password, real_name) values (?, ?, ?)
+        // insert into t_user (id, username, password, age, real_name) values (?, ?, ?, ?, ?)
         user.save();
     }
 

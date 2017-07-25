@@ -12,9 +12,6 @@ public class UUIDUtils {
 
     /**
      * 生成指定长度的uuid
-     *
-     * @param length
-     * @return
      */
     private static String getUUID(int length, UUID uuid) {
         int groupLength = 32 / length;
@@ -29,66 +26,9 @@ public class UUIDUtils {
     }
 
     /**
-     * 8位UUID
-     *
-     * @return
-     */
-    public static String getUUID8() {
-        return getUUID(8, UUID.randomUUID());
-    }
-
-    /**
-     * 8位UUID
-     *
-     * @return
-     */
-    public static String getUUID8(byte[] bytes) {
-        return getUUID(8, UUID.nameUUIDFromBytes(bytes));
-    }
-
-    /**
-     * 8位UUID
-     *
-     * @return
-     */
-    public static String getUUID8(String fromString) {
-        return getUUID(8, UUID.fromString(fromString));
-    }
-
-    /**
      * 16位UUID
-     *
-     * @return
      */
     public static String getUUID16() {
         return getUUID(16, UUID.randomUUID());
     }
-
-    /**
-     * 16位UUID
-     *
-     * @return
-     */
-    public static String getUUID16(String fromString) {
-        return getUUID(16, UUID.fromString(fromString));
-    }
-
-    /**
-     * 16位UUID
-     *
-     * @return
-     */
-    public static String getUUID16(byte[] bytes) {
-        return getUUID(16, UUID.nameUUIDFromBytes(bytes));
-    }
-
-    /**
-     * 32位UUID
-     *
-     * @return
-     */
-    public static String getUUID32() {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
 }

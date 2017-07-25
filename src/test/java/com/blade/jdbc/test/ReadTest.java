@@ -34,6 +34,7 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test2() {
         User user = new User();
+        // select * from t_user where id = ?
         User u1   = user.find(1);
         System.out.println(u1);
     }
@@ -52,7 +53,6 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test4() {
         User user = new User();
-
         long count = user.count();
         System.out.println(count);
     }
@@ -60,7 +60,6 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test5() {
         User user = new User();
-
         System.out.println(user.queryAll("select * from t_user"));
         System.out.println(user.queryAll("select * from t_user where id = ?", 1));
     }
@@ -68,14 +67,6 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test6() {
         User user = new User();
-        System.out.println(user.query("select * from t_user order by id desc"));
-        System.out.println(user.query("select * from t_user where id = ?", 1));
-    }
-
-    @Test
-    public void test7() {
-        User user = new User();
-
         System.out.println(user.query("select * from t_user order by id desc"));
         System.out.println(user.query("select * from t_user where id = ?", 1));
     }

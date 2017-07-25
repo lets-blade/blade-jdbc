@@ -1,5 +1,6 @@
 package com.blade.jdbc.test;
 
+import com.blade.jdbc.core.ActiveRecord;
 import com.blade.jdbc.test.model.User;
 import org.junit.Test;
 
@@ -9,14 +10,33 @@ import org.junit.Test;
 public class UpdateTest extends BaseTestCase {
 
     @Test
-    public void test2() {
-
+    public void test1() {
         User user = new User();
-        user.setUsername("jack");
-        user.setPassword("123556");
-        user.setRealName("杰克65");
+        user.setUsername("jack_up");
+        // update t_user set username = ? where id = ?
+        user.where("id", 43).update();
+    }
 
-        user.where("id", 42).update();
+    @Test
+    public void test2() {
+        User user = new User();
+        user.setAge(19);
+        // update t_user set age = ? where id = ?
+        user.update(43);
+    }
+
+    @Test
+    public void test3() {
+        User user = new User();
+        user.setAge(32);
+        // update t_user set age = ? where age < ?
+        user.where("age", "<", 20).update();
+    }
+
+    @Test
+    public void test4() {
+        ActiveRecord activeRecord = new ActiveRecord();
+        activeRecord.execute("update t_user set age = 22 where age < 20");
     }
 
 }

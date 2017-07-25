@@ -68,10 +68,10 @@ public class ActiveRecord implements Serializable {
         return this.where(" or " + key, opt, value);
     }
 
-    public void save() {
-        String sql = SqlBuilder.buildInsertSql(this);
+    public <S extends Serializable> S save() {
+        QueryMeta queryMeta = SqlBuilder.buildInsertSql(this);
         try (Connection con = getConn()) {
-            con.createQuery(sql).bind(this).executeUpdate();
+            return (S) con.createQuery(queryMeta.getSql()).bind(this).executeUpdate().getKey();
         }
     }
 
@@ -84,10 +84,11 @@ public class ActiveRecord implements Serializable {
         this.update();
     }
 
-    public void update() {
+    public int update() {
         QueryMeta queryMeta = SqlBuilder.buildUpdateSql(this);
-        this.invoke(queryMeta);
+        int       result    = this.invoke(queryMeta);
         this.cleanParam();
+        return result;
     }
 
     public void execute(String sql, Object... params) {
@@ -98,14 +99,14 @@ public class ActiveRecord implements Serializable {
         invoke(new QueryMeta(sql, params));
     }
 
-    private void invoke(QueryMeta queryMeta) {
+    private int invoke(QueryMeta queryMeta) {
         if (null == Base.connectionThreadLocal.get()) {
             try (Connection con = getSql2o().open()) {
-                con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate();
+                return con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate().getResult();
             }
         } else {
             Connection con = getConn();
-            con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate();
+            return con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate().getResult();
         }
     }
 
@@ -207,13 +208,18 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> T find(Serializable id) {
-        String   sql  = "select * from " + getTableName() + " where " + getPk() + " = :p1";
+        String    sql       = "select * from " + getTableName() + " where " + getPk() + " = :p1";
+        QueryMeta queryMeta = new QueryMeta();
+        SqlBuilder.mapping(queryMeta, this.getClass());
+
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
-            return con.createQuery(sql)
-                    .withParams(id)
-                    .executeAndFetchFirst(type);
+            Query query = con.createQuery(sql).withParams(id);
+            if (queryMeta.hasColumnMapping()) {
+                queryMeta.getColumnMapping().forEach(query::addColumnMapping);
+            }
+            return query.executeAndFetchFirst(type);
         }
     }
 
