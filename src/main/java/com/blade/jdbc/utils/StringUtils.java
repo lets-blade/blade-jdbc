@@ -13,7 +13,4 @@ public class StringUtils {
         return null == str || str.equals("");
     }
 
-    public static String trim(String str) {
-        return null != str ? str.trim() : str;
-    }
 }

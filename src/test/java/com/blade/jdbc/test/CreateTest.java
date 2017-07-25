@@ -14,7 +14,7 @@ public class CreateTest extends BaseTestCase {
         User user = new User();
         user.setUsername("jack");
         user.setPassword("123556");
-        user.setReal_name("杰克");
+        user.setRealName("杰克");
 
         // insert into t_user (username, password, real_name) values (?, ?, ?)
         user.save();

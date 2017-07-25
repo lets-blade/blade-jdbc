@@ -1,5 +1,6 @@
 package com.blade.jdbc.test;
 
+import com.blade.jdbc.Base;
 import com.blade.jdbc.test.model.User;
 import org.junit.Test;
 
@@ -10,14 +11,13 @@ public class TransactionTest extends BaseTestCase {
 
     @Test
     public void test1() {
-        User user = new User();
-
-        user.setPassword("51n2(S24cPc");
-
-        user.atomic(() -> {
+        Base.atomic(() -> {
+            User user = new User();
+            user.setPassword("999");
             user.update(42);
 //            int a = 1 / 0;
             System.out.println("aasdasd");
+            return true;
         });
     }
 

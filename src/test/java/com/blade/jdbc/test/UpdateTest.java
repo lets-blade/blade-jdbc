@@ -14,7 +14,7 @@ public class UpdateTest extends BaseTestCase {
         User user = new User();
         user.setUsername("jack");
         user.setPassword("123556");
-        user.setReal_name("杰克65");
+        user.setRealName("杰克65");
 
         user.where("id", 42).update();
     }

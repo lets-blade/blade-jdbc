@@ -88,4 +88,10 @@ public class ReadTest extends BaseTestCase {
         System.out.println("count=" + count);
     }
 
+    @Test
+    public void testLike() {
+        User       user  = new User();
+        List<User> users = user.like("username", "%jac%").and("age", ">", 18).findAll();
+        System.out.println(users);
+    }
 }

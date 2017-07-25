@@ -12,8 +12,9 @@ import lombok.Data;
 public class User extends ActiveRecord {
 
     private Integer id;
-    private String username;
-    private String password;
-    private String real_name;
+    private String  username;
+    private String  password;
+    private Integer age;
+    private String  realName;
 
 }
