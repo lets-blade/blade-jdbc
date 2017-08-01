@@ -68,6 +68,14 @@ public class ActiveRecord implements Serializable {
         return this.where(" or " + key, opt, value);
     }
 
+    //    TODO
+    public <T extends ActiveRecord> T between(String key, Object val1, Object val2) {
+        // date between ? and ?
+        this.whereValues.add(WhereParam.builder().key(key).opt("between").value(val1).build());
+        this.saveOrUpdateProperties.add(key);
+        return (T) this;
+    }
+
     public <S extends Serializable> S save() {
         QueryMeta queryMeta = SqlBuilder.buildInsertSql(this);
         try (Connection con = getConn()) {
@@ -174,12 +182,12 @@ public class ActiveRecord implements Serializable {
             while (sql.indexOf("?") != -1) {
                 sql = sql.replaceFirst("\\?", ":p" + pos);
             }
-            if (null != params) {
-
-            }
         }
-        long    count = this.count(false);
-        List<T> list  = this.findAll();
+
+        String countSql = "select count(*) from (" + sql + ") tmp";
+        long   count    = this.count(countSql);
+
+        List<T> list = this.queryAll(sql, params);
 
         Page<T> pageBean = new Page<>();
         pageBean.setTotalRow(count);
@@ -235,6 +243,18 @@ public class ActiveRecord implements Serializable {
 
     public long count() {
         return this.count(true);
+    }
+
+    public long count(String sql, Object... args) {
+        int pos = 1;
+        while (sql.indexOf("?") != -1) {
+            sql = sql.replaceFirst("\\?", ":p" + pos);
+        }
+        try (Connection con = getSql2o().open()) {
+            this.cleanParam();
+            return con.createQuery(sql).withParams(args)
+                    .executeAndFetchFirst(Long.class);
+        }
     }
 
     String getTableName() {
