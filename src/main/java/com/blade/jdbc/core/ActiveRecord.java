@@ -185,7 +185,7 @@ public class ActiveRecord implements Serializable {
         }
 
         String countSql = "select count(*) from (" + sql + ") tmp";
-        long   count    = this.count(countSql);
+        long   count    = this.count(countSql, params);
 
         List<T> list = this.queryAll(sql, params);
 
