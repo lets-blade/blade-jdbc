@@ -35,4 +35,12 @@ public class Page<T> {
         return page;
     }
 
+    public boolean hasNext() {
+        return this.nextPage > this.page;
+    }
+
+    public boolean hasPrev() {
+        return this.prevPage < this.page;
+    }
+
 }

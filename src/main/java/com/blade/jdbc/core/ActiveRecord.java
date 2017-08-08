@@ -140,6 +140,11 @@ public class ActiveRecord implements Serializable {
         while (sql.indexOf("?") != -1) {
             sql = sql.replaceFirst("\\?", ":p" + pos);
         }
+        PageRow pageRow = Base.pageLocal.get();
+        String  limit   = SqlBuilder.appendLimit(pageRow);
+        if (null != limit) {
+            sql += limit;
+        }
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
@@ -193,10 +198,21 @@ public class ActiveRecord implements Serializable {
         pageBean.setTotalRow(count);
         pageBean.setRows(list);
         pageBean.setPage(page);
-        pageBean.setPrevPage(page < 2 ? 1 : page - 1);
-        pageBean.setNextPage(page + 1);
         pageBean.setTotalPages(count / limit + (count % limit != 0 ? 1 : 0));
-
+        if (pageBean.getTotalPages() > page) {
+            pageBean.setNextPage(page + 1);
+        } else {
+            pageBean.setNextPage(page);
+        }
+        if (page > 1) {
+            if (page > pageBean.getTotalPages()) {
+                pageBean.setPrevPage(1);
+            } else {
+                pageBean.setPrevPage(page - 1);
+            }
+        } else {
+            pageBean.setPrevPage(1);
+        }
         Base.pageLocal.remove();
         return pageBean;
     }

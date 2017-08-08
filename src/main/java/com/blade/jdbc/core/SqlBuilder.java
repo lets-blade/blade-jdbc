@@ -42,9 +42,15 @@ class SqlBuilder {
         Stream.of(activeRecord.getClass().getDeclaredFields())
                 .filter(field -> null == field.getAnnotation(Transient.class))
                 .forEach(field -> {
-                    Pair<String, String> pair = getColumnName(field);
-                    sb.append(pair.getLeft()).append(", ");
-                    values.append(':').append(pair.getRight()).append(", ");
+                    try {
+                        field.setAccessible(true);
+                        if (field.get(activeRecord) != null) {
+                            Pair<String, String> pair = getColumnName(field);
+                            sb.append(pair.getLeft()).append(", ");
+                            values.append(':').append(pair.getRight()).append(", ");
+                        }
+                    } catch (Exception e) {
+                    }
                 });
 
         sb.append(')');
@@ -311,7 +317,7 @@ class SqlBuilder {
         return sql;
     }
 
-    private static String appendLimit(PageRow pageRow) {
+    public static String appendLimit(PageRow pageRow) {
         if (null == pageRow) {
             return null;
         }

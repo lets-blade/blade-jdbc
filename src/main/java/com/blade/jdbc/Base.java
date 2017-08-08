@@ -1,12 +1,14 @@
 package com.blade.jdbc;
 
 import com.blade.jdbc.page.PageRow;
+import lombok.extern.slf4j.Slf4j;
 import org.sql2o.Connection;
 import org.sql2o.Sql2o;
 
 import javax.sql.DataSource;
 import java.util.function.Supplier;
 
+@Slf4j
 public final class Base {
 
     public static final ThreadLocal<PageRow>    pageLocal             = new ThreadLocal<>();
@@ -40,6 +42,7 @@ public final class Base {
                 con.commit();
             }
         } catch (RuntimeException e) {
+            log.info("Transaction rollback");
             connectionThreadLocal.get().rollback();
             throw e;
         } finally {
