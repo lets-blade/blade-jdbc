@@ -12,6 +12,8 @@ import org.sql2o.Query;
 import org.sql2o.Sql2o;
 
 import java.io.Serializable;
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -28,6 +30,10 @@ public class ActiveRecord implements Serializable {
     @Transient
     private Set<String> saveOrUpdateProperties = new TreeSet<>();
 
+    @Transient
+    private List<String> whereKeys = new ArrayList<>();
+    private List<Object> whereVals = new ArrayList<>();
+
     public ActiveRecord() {
     }
 
@@ -36,6 +42,58 @@ public class ActiveRecord implements Serializable {
             return sql2o;
         }
         return Base.sql2o;
+    }
+
+    public <S, T extends ActiveRecord> T where(LambdaExpression<T, S> action) {
+        action.apply((T) this);
+
+        SerializedLambda lambda = getSerializedLambda(action);
+
+        System.out.println("lambdaClassName:" + lambda.getImplClass());
+        System.out.println("lambdaMethodName:" + lambda.getImplMethodName());
+
+        return null;
+    }
+
+    // getting the SerializedLambda
+    public <S, T extends ActiveRecord> SerializedLambda getSerializedLambda(LambdaExpression<T, S> action) {
+        for (Class<?> clazz = action.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
+            try {
+                Method replaceMethod = clazz.getDeclaredMethod("writeReplace");
+                replaceMethod.setAccessible(true);
+                Object serializedForm = replaceMethod.invoke(action);
+
+                if (serializedForm instanceof SerializedLambda) {
+                    return (SerializedLambda) serializedForm;
+                }
+            } catch (NoSuchMethodError e) {
+                // fall through the loop and try the next class
+            } catch (Throwable t) {
+                throw new RuntimeException("Error while extracting serialized lambda", t);
+            }
+        }
+        throw new RuntimeException("writeReplace method not found");
+    }
+
+    // getting the synthetic static lambda method
+    public static Method getLambdaMethod(SerializedLambda lambda) throws Exception {
+        String   implClassName = lambda.getImplClass().replace('/', '.');
+        Class<?> implClass     = Class.forName(implClassName);
+
+        String lambdaName = lambda.getImplMethodName();
+
+        for (Method m : implClass.getDeclaredMethods()) {
+            if (m.getName().equals(lambdaName)) {
+                return m;
+            }
+        }
+
+        throw new Exception("Lambda Method not found");
+    }
+
+    public <T extends ActiveRecord> T is(Object value) {
+
+        return (T) this;
     }
 
     public <T extends ActiveRecord> T where(String key, Object value) {
@@ -317,4 +375,5 @@ public class ActiveRecord implements Serializable {
                     return null;
                 }));
     }
+
 }

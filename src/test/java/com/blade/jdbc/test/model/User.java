@@ -4,6 +4,8 @@ import com.blade.jdbc.core.ActiveRecord;
 import com.blade.jdbc.annotation.Table;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * Created by biezhi on 2016/12/25.
  */

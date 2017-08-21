@@ -35,7 +35,7 @@ public class ReadTest extends BaseTestCase {
     public void test2() {
         User user = new User();
         // select * from t_user where id = ?
-        User u1   = user.find(1);
+        User u1 = user.find(1);
         System.out.println(u1);
     }
 
@@ -45,6 +45,8 @@ public class ReadTest extends BaseTestCase {
         List<User> list = user.where("username", "jack").findAll();
         System.out.println(list);
 
+//        user.where(User::getUsername).is("jack").findAll();
+
         list = user.findAll(Fields.of("username"), OrderBy.desc("id"));
         System.out.println(list);
 
@@ -52,7 +54,7 @@ public class ReadTest extends BaseTestCase {
 
     @Test
     public void test4() {
-        User user = new User();
+        User user  = new User();
         long count = user.count();
         System.out.println(count);
     }
