@@ -7,17 +7,18 @@ import com.blade.jdbc.page.Page;
 import com.blade.jdbc.page.PageRow;
 import com.blade.jdbc.utils.Unchecked;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.sql2o.Connection;
 import org.sql2o.Query;
 import org.sql2o.Sql2o;
 
 import java.io.Serializable;
-import java.lang.invoke.SerializedLambda;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 public class ActiveRecord implements Serializable {
 
     @Transient
@@ -38,37 +39,6 @@ public class ActiveRecord implements Serializable {
             return sql2o;
         }
         return Base.sql2o;
-    }
-
-    public <S, T extends ActiveRecord> T where(LambdaExpression<T, S> action) {
-        action.apply((T) this);
-
-        SerializedLambda lambda = getSerializedLambda(action);
-
-        System.out.println("lambdaClassName:" + lambda.getImplClass());
-        System.out.println("lambdaMethodName:" + lambda.getImplMethodName());
-
-        return null;
-    }
-
-    // getting the SerializedLambda
-    public <S, T extends ActiveRecord> SerializedLambda getSerializedLambda(LambdaExpression<T, S> action) {
-        for (Class<?> clazz = action.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
-            try {
-                Method replaceMethod = clazz.getDeclaredMethod("writeReplace");
-                replaceMethod.setAccessible(true);
-                Object serializedForm = replaceMethod.invoke(action);
-
-                if (serializedForm instanceof SerializedLambda) {
-                    return (SerializedLambda) serializedForm;
-                }
-            } catch (NoSuchMethodError e) {
-                // fall through the loop and try the next class
-            } catch (Throwable t) {
-                throw new RuntimeException("Error while extracting serialized lambda", t);
-            }
-        }
-        throw new RuntimeException("writeReplace method not found");
     }
 
     public <T extends ActiveRecord> T where(String key, Object value) {
@@ -101,6 +71,10 @@ public class ActiveRecord implements Serializable {
         return this.where(" or " + key, opt, value);
     }
 
+    public <T extends ActiveRecord, V> T in(String key, List<V> list) {
+        return this.where(key, "in", "(" + list.stream().map(Object::toString).collect(Collectors.joining(",")) + ")");
+    }
+
     //    TODO
     public <T extends ActiveRecord> T between(String key, Object val1, Object val2) {
         // date between ? and ?
@@ -112,6 +86,7 @@ public class ActiveRecord implements Serializable {
     public <S extends Serializable> S save() {
         QueryMeta queryMeta = SqlBuilder.buildInsertSql(this);
         try (Connection con = getConn()) {
+            log.debug("execute sql => {}", queryMeta.getSql());
             return (S) con.createQuery(queryMeta.getSql()).bind(this).executeUpdate().getKey();
         }
     }
@@ -135,12 +110,14 @@ public class ActiveRecord implements Serializable {
     public void execute(String sql, Object... params) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
-            sql = sql.replaceFirst("\\?", ":p" + pos);
+            sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         invoke(new QueryMeta(sql, params));
     }
 
     private int invoke(QueryMeta queryMeta) {
+        log.debug("execute sql => {}", queryMeta.getSql());
+        log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
         if (null == Base.connectionThreadLocal.get()) {
             try (Connection con = getSql2o().open()) {
                 return con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate().getResult();
@@ -158,11 +135,13 @@ public class ActiveRecord implements Serializable {
     public <T> T query(String sql, Object... args) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
-            sql = sql.replaceFirst("\\?", ":p" + pos);
+            sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
+            log.debug("execute sql => {}", sql);
+            log.debug("parameters  => {}", Arrays.toString(args));
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(type);
         }
@@ -171,7 +150,7 @@ public class ActiveRecord implements Serializable {
     public <T> List<T> queryAll(String sql, Object... args) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
-            sql = sql.replaceFirst("\\?", ":p" + pos);
+            sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         PageRow pageRow = Base.pageLocal.get();
         String  limit   = SqlBuilder.appendLimit(pageRow);
@@ -181,6 +160,8 @@ public class ActiveRecord implements Serializable {
         Class<T> type = (Class<T>) getClass();
         args = args == null ? new Object[]{} : args;
         try (Connection con = getSql2o().open()) {
+            log.debug("execute sql => {}", sql);
+            log.debug("parameters  => {}", Arrays.toString(args));
             Query     query     = con.createQuery(sql).withParams(args);
             QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, null);
             if (queryMeta.hasColumnMapping()) {
@@ -199,6 +180,8 @@ public class ActiveRecord implements Serializable {
         QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, conditions);
         Class<T>  type      = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
+            log.debug("execute sql => {}", queryMeta.getSql());
+            log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
             Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
@@ -244,27 +227,9 @@ public class ActiveRecord implements Serializable {
             sql += " order by " + orderBy;
         }
 
-        List<T> list = this.queryAll(sql, params);
-
-        Page<T> pageBean = new Page<>();
-        pageBean.setTotalRow(count);
+        List<T> list     = this.queryAll(sql, params);
+        Page<T> pageBean = new Page<>(count, page, limit);
         pageBean.setRows(list);
-        pageBean.setPage(page);
-        pageBean.setTotalPages(count / limit + (count % limit != 0 ? 1 : 0));
-        if (pageBean.getTotalPages() > page) {
-            pageBean.setNextPage(page + 1);
-        } else {
-            pageBean.setNextPage(page);
-        }
-        if (page > 1) {
-            if (page > pageBean.getTotalPages()) {
-                pageBean.setPrevPage(1);
-            } else {
-                pageBean.setPrevPage(page - 1);
-            }
-        } else {
-            pageBean.setPrevPage(1);
-        }
         Base.pageLocal.remove();
         return pageBean;
     }
@@ -274,8 +239,11 @@ public class ActiveRecord implements Serializable {
         Class<T>  type      = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
-            Query query = con.createQuery(queryMeta.getSql())
-                    .withParams(queryMeta.getParams());
+
+            log.debug("execute sql => {}", queryMeta.getSql());
+            log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
+
+            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
             }
@@ -291,6 +259,10 @@ public class ActiveRecord implements Serializable {
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
+
+            log.debug("execute sql => {}", sql);
+            log.debug("parameters  => [{}]", id);
+
             Query query = con.createQuery(sql).withParams(id);
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
@@ -303,6 +275,10 @@ public class ActiveRecord implements Serializable {
         QueryMeta queryMeta = SqlBuilder.buildCountSql(this);
         try (Connection con = getSql2o().open()) {
             if (cleanParam) this.cleanParam();
+
+            log.debug("execute sql => {}", queryMeta.getSql());
+            log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
+
             return con.createQuery(queryMeta.getSql())
                     .withParams(queryMeta.getParams())
                     .executeAndFetchFirst(Long.class);
@@ -316,11 +292,15 @@ public class ActiveRecord implements Serializable {
     public long count(String sql, Object... args) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
-            sql = sql.replaceFirst("\\?", ":p" + pos);
+            sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         args = args == null ? new Object[]{} : args;
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
+
+            log.debug("execute sql => {}", sql);
+            log.debug("parameters  => {}", Arrays.toString(args));
+
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(Long.class);
         }

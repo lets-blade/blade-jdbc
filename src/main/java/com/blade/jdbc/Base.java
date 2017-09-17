@@ -26,6 +26,11 @@ public final class Base {
         return sql2o;
     }
 
+    public static Sql2o open(Sql2o sql2o_) {
+        sql2o = sql2o_;
+        return sql2o;
+    }
+
     /**
      * 原子提交
      *
