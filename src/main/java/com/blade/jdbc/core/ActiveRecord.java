@@ -21,6 +21,9 @@ import java.util.stream.Stream;
 @Slf4j
 public class ActiveRecord implements Serializable {
 
+    private static final String EXECUTE_SQL_PREFIX = "⬢ Execute SQL";
+    private static final String PARAMETER_PREFIX   = "⬢ Parameters ";
+
     @Transient
     @Setter
     protected Sql2o sql2o;
@@ -86,7 +89,7 @@ public class ActiveRecord implements Serializable {
     public <S extends Serializable> S save() {
         QueryMeta queryMeta = SqlBuilder.buildInsertSql(this);
         try (Connection con = getConn()) {
-            log.debug("execute sql => {}", queryMeta.getSql());
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
             return (S) con.createQuery(queryMeta.getSql()).bind(this).executeUpdate().getKey();
         }
     }
@@ -116,8 +119,8 @@ public class ActiveRecord implements Serializable {
     }
 
     private int invoke(QueryMeta queryMeta) {
-        log.debug("execute sql => {}", queryMeta.getSql());
-        log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
+        log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
+        log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
         if (null == Base.connectionThreadLocal.get()) {
             try (Connection con = getSql2o().open()) {
                 return con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate().getResult();
@@ -140,8 +143,8 @@ public class ActiveRecord implements Serializable {
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
-            log.debug("execute sql => {}", sql);
-            log.debug("parameters  => {}", Arrays.toString(args));
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
+            log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(type);
         }
@@ -160,8 +163,8 @@ public class ActiveRecord implements Serializable {
         Class<T> type = (Class<T>) getClass();
         args = args == null ? new Object[]{} : args;
         try (Connection con = getSql2o().open()) {
-            log.debug("execute sql => {}", sql);
-            log.debug("parameters  => {}", Arrays.toString(args));
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
+            log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
             Query     query     = con.createQuery(sql).withParams(args);
             QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, null);
             if (queryMeta.hasColumnMapping()) {
@@ -180,8 +183,8 @@ public class ActiveRecord implements Serializable {
         QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, conditions);
         Class<T>  type      = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
-            log.debug("execute sql => {}", queryMeta.getSql());
-            log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
+            log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
             Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
@@ -204,7 +207,12 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String orderBy) {
-        return page(pageRow, null, orderBy);
+        QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, null);
+        return page(pageRow, queryMeta.getSql(), orderBy, queryMeta.getParams());
+    }
+
+    public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String sql, Object... params) {
+        return page(pageRow, sql, null, params);
     }
 
     public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String sql, String orderBy, Object... params) {
@@ -214,7 +222,7 @@ public class ActiveRecord implements Serializable {
         if (null != sql) {
             int pos = 1;
             while (sql.indexOf("?") != -1) {
-                sql = sql.replaceFirst("\\?", ":p" + pos);
+                sql = sql.replaceFirst("\\?", ":p" + (pos++));
             }
         } else {
             sql = "select * from " + getTableName();
@@ -240,8 +248,8 @@ public class ActiveRecord implements Serializable {
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
 
-            log.debug("execute sql => {}", queryMeta.getSql());
-            log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
+            log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
 
             Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
             if (queryMeta.hasColumnMapping()) {
@@ -260,8 +268,8 @@ public class ActiveRecord implements Serializable {
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
 
-            log.debug("execute sql => {}", sql);
-            log.debug("parameters  => [{}]", id);
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
+            log.debug(PARAMETER_PREFIX + " => [{}]", id);
 
             Query query = con.createQuery(sql).withParams(id);
             if (queryMeta.hasColumnMapping()) {
@@ -276,8 +284,8 @@ public class ActiveRecord implements Serializable {
         try (Connection con = getSql2o().open()) {
             if (cleanParam) this.cleanParam();
 
-            log.debug("execute sql => {}", queryMeta.getSql());
-            log.debug("parameters  => {}", Arrays.toString(queryMeta.getParams()));
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
+            log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
 
             return con.createQuery(queryMeta.getSql())
                     .withParams(queryMeta.getParams())
@@ -298,8 +306,8 @@ public class ActiveRecord implements Serializable {
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
 
-            log.debug("execute sql => {}", sql);
-            log.debug("parameters  => {}", Arrays.toString(args));
+            log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
+            log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
 
             return con.createQuery(sql).withParams(args)
                     .executeAndFetchFirst(Long.class);
