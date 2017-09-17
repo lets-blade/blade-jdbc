@@ -69,8 +69,12 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test6() {
         User user = new User();
-        System.out.println(user.query("select * from t_user order by id desc"));
-        System.out.println(user.query("select * from t_user where id = ?", 1));
+
+        List<User> list = user.queryAll("select * from t_user order by id desc");
+        System.out.println(list);
+
+        User one = user.query("select * from t_user where id = ?", 1);
+        System.out.println(one);
     }
 
     @Test

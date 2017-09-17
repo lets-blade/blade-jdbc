@@ -30,10 +30,6 @@ public class ActiveRecord implements Serializable {
     @Transient
     private Set<String> saveOrUpdateProperties = new TreeSet<>();
 
-    @Transient
-    private List<String> whereKeys = new ArrayList<>();
-    private List<Object> whereVals = new ArrayList<>();
-
     public ActiveRecord() {
     }
 
@@ -73,27 +69,6 @@ public class ActiveRecord implements Serializable {
             }
         }
         throw new RuntimeException("writeReplace method not found");
-    }
-
-    // getting the synthetic static lambda method
-    public static Method getLambdaMethod(SerializedLambda lambda) throws Exception {
-        String   implClassName = lambda.getImplClass().replace('/', '.');
-        Class<?> implClass     = Class.forName(implClassName);
-
-        String lambdaName = lambda.getImplMethodName();
-
-        for (Method m : implClass.getDeclaredMethods()) {
-            if (m.getName().equals(lambdaName)) {
-                return m;
-            }
-        }
-
-        throw new Exception("Lambda Method not found");
-    }
-
-    public <T extends ActiveRecord> T is(Object value) {
-
-        return (T) this;
     }
 
     public <T extends ActiveRecord> T where(String key, Object value) {
@@ -180,7 +155,7 @@ public class ActiveRecord implements Serializable {
         return null != Base.connectionThreadLocal.get() ? Base.connectionThreadLocal.get() : getSql2o().open();
     }
 
-    public <T extends ActiveRecord> T query(String sql, Object... args) {
+    public <T> T query(String sql, Object... args) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
             sql = sql.replaceFirst("\\?", ":p" + pos);
@@ -193,7 +168,7 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    public <T extends ActiveRecord> List<T> queryAll(String sql, Object... args) {
+    public <T> List<T> queryAll(String sql, Object... args) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
             sql = sql.replaceFirst("\\?", ":p" + pos);
@@ -204,10 +179,15 @@ public class ActiveRecord implements Serializable {
             sql += limit;
         }
         Class<T> type = (Class<T>) getClass();
+        args = args == null ? new Object[]{} : args;
         try (Connection con = getSql2o().open()) {
+            Query     query     = con.createQuery(sql).withParams(args);
+            QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, null);
+            if (queryMeta.hasColumnMapping()) {
+                queryMeta.getColumnMapping().forEach(query::addColumnMapping);
+            }
             this.cleanParam();
-            return con.createQuery(sql).withParams(args)
-                    .executeAndFetch(type);
+            return query.executeAndFetch(type);
         }
     }
 
@@ -229,14 +209,22 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> Page<T> page(int page, int limit) {
-        return this.page(new PageRow(page, limit));
+        return this.page(page, limit, null);
+    }
+
+    public <T extends ActiveRecord> Page<T> page(int page, int limit, String orderBy) {
+        return this.page(new PageRow(page, limit), orderBy);
     }
 
     public <T extends ActiveRecord> Page<T> page(PageRow pageRow) {
-        return page(pageRow, null, null);
+        return page(pageRow, null);
     }
 
-    public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String sql, Object... params) {
+    public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String orderBy) {
+        return page(pageRow, null, orderBy);
+    }
+
+    public <T extends ActiveRecord> Page<T> page(PageRow pageRow, String sql, String orderBy, Object... params) {
         Base.pageLocal.set(pageRow);
         int page  = pageRow.getPage();
         int limit = pageRow.getLimit();
@@ -245,10 +233,16 @@ public class ActiveRecord implements Serializable {
             while (sql.indexOf("?") != -1) {
                 sql = sql.replaceFirst("\\?", ":p" + pos);
             }
+        } else {
+            sql = "select * from " + getTableName();
         }
 
-        String countSql = "select count(*) from (" + sql + ") tmp";
+        String countSql = "select count(0) from (" + sql + ") tmp";
         long   count    = this.count(countSql, params);
+
+        if (null != orderBy) {
+            sql += " order by " + orderBy;
+        }
 
         List<T> list = this.queryAll(sql, params);
 
@@ -324,6 +318,7 @@ public class ActiveRecord implements Serializable {
         while (sql.indexOf("?") != -1) {
             sql = sql.replaceFirst("\\?", ":p" + pos);
         }
+        args = args == null ? new Object[]{} : args;
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
             return con.createQuery(sql).withParams(args)
