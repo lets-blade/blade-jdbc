@@ -349,8 +349,7 @@ class SqlBuilder {
                 .map(field -> Unchecked.wrap(() -> {
                     Object               value = field.get(activeRecord);
                     Pair<String, String> pair  = getColumnName(field);
-
-                    sqlBuf.append(pair.getRight()).append(" = ").append(":p").append(pos[0]++).append(", ");
+                    sqlBuf.append(pair.getLeft()).append(" = ").append(":p").append(pos[0]++).append(", ");
                     return value;
                 }))
                 .collect(Collectors.toList());

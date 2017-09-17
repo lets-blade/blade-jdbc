@@ -21,6 +21,7 @@ public class UpdateTest extends BaseTestCase {
     public void test2() {
         User user = new User();
         user.setAge(19);
+        user.setRealName("aaa");
         // update t_user set age = ? where id = ?
         user.update(43);
     }

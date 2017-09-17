@@ -123,11 +123,20 @@ public class ActiveRecord implements Serializable {
         log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
         if (null == Base.connectionThreadLocal.get()) {
             try (Connection con = getSql2o().open()) {
-                return con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate().getResult();
+                Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
+                if (queryMeta.hasColumnMapping()) {
+                    queryMeta.getColumnMapping().forEach(query::addColumnMapping);
+                }
+                return query.executeUpdate().getResult();
             }
         } else {
-            Connection con = getConn();
-            return con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).executeUpdate().getResult();
+            try (Connection con = getConn()) {
+                Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
+                if (queryMeta.hasColumnMapping()) {
+                    queryMeta.getColumnMapping().forEach(query::addColumnMapping);
+                }
+                return query.executeUpdate().getResult();
+            }
         }
     }
 
