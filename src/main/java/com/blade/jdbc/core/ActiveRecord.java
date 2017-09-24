@@ -94,13 +94,13 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    public void update(Serializable pk) {
-        this.update(getPk(), pk);
+    public int update(Serializable pk) {
+        return this.update(getPk(), pk);
     }
 
-    public void update(String field, Object value) {
+    public int update(String field, Object value) {
         this.whereValues.add(WhereParam.builder().key(field).opt("=").value(value).build());
-        this.update();
+        return this.update();
     }
 
     public int update() {
@@ -110,38 +110,39 @@ public class ActiveRecord implements Serializable {
         return result;
     }
 
-    public void execute(String sql, Object... params) {
+    public int execute(String sql, Object... params) {
         int pos = 1;
         while (sql.indexOf("?") != -1) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
-        invoke(new QueryMeta(sql, params));
+        return invoke(new QueryMeta(sql, params));
     }
 
     private int invoke(QueryMeta queryMeta) {
         log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
         log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
-        if (null == Base.connectionThreadLocal.get()) {
-            try (Connection con = getSql2o().open()) {
-                Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
-                if (queryMeta.hasColumnMapping()) {
-                    queryMeta.getColumnMapping().forEach(query::addColumnMapping);
-                }
-                return query.executeUpdate().getResult();
+        Connection con = getConn();
+        try {
+            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
+            if (queryMeta.hasColumnMapping()) {
+                queryMeta.getColumnMapping().forEach(query::addColumnMapping);
             }
-        } else {
-            try (Connection con = getConn()) {
-                Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
-                if (queryMeta.hasColumnMapping()) {
-                    queryMeta.getColumnMapping().forEach(query::addColumnMapping);
+            return query.executeUpdate().getResult();
+        } finally {
+            if (Base.connectionThreadLocal.get() == null) {
+                if (null != con) {
+                    con.close();
                 }
-                return query.executeUpdate().getResult();
             }
         }
     }
 
     private Connection getConn() {
-        return null != Base.connectionThreadLocal.get() ? Base.connectionThreadLocal.get() : getSql2o().open();
+        Connection connection = Base.connectionThreadLocal.get();
+        if (null != connection) {
+            return connection;
+        }
+        return getSql2o().open();
     }
 
     public <T> T query(String sql, Object... args) {
@@ -151,11 +152,15 @@ public class ActiveRecord implements Serializable {
         }
         Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
-            this.cleanParam();
             log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
-            return con.createQuery(sql).withParams(args)
-                    .executeAndFetchFirst(type);
+            this.cleanParam();
+            Query     query     = con.createQuery(sql).withParams(args).throwOnMappingFailure(false);
+            QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, null);
+            if (queryMeta.hasColumnMapping()) {
+                queryMeta.getColumnMapping().forEach(query::addColumnMapping);
+            }
+            return query.executeAndFetchFirst(type);
         }
     }
 
@@ -174,12 +179,12 @@ public class ActiveRecord implements Serializable {
         try (Connection con = getSql2o().open()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
-            Query     query     = con.createQuery(sql).withParams(args);
+            this.cleanParam();
+            Query     query     = con.createQuery(sql).withParams(args).throwOnMappingFailure(false);
             QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, null);
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
             }
-            this.cleanParam();
             return query.executeAndFetch(type);
         }
     }
@@ -194,11 +199,11 @@ public class ActiveRecord implements Serializable {
         try (Connection con = getSql2o().open()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
-            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
+            this.cleanParam();
+            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).throwOnMappingFailure(false);
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
             }
-            this.cleanParam();
             return query.executeAndFetch(type);
         }
     }
@@ -260,7 +265,7 @@ public class ActiveRecord implements Serializable {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
 
-            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
+            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams()).throwOnMappingFailure(false);
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
             }
@@ -280,7 +285,7 @@ public class ActiveRecord implements Serializable {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
             log.debug(PARAMETER_PREFIX + " => [{}]", id);
 
-            Query query = con.createQuery(sql).withParams(id);
+            Query query = con.createQuery(sql).withParams(id).throwOnMappingFailure(false);
             if (queryMeta.hasColumnMapping()) {
                 queryMeta.getColumnMapping().forEach(query::addColumnMapping);
             }
@@ -341,19 +346,20 @@ public class ActiveRecord implements Serializable {
         return "id";
     }
 
-    public void delete() {
+    public int delete() {
         QueryMeta queryMeta = SqlBuilder.buildDeleteSql(this);
-        this.invoke(queryMeta);
+        int       result    = this.invoke(queryMeta);
         this.cleanParam();
+        return result;
     }
 
-    public void delete(Serializable pk) {
-        this.delete(getPk(), pk);
+    public int delete(Serializable pk) {
+        return this.delete(getPk(), pk);
     }
 
-    public void delete(String field, Object value) {
+    public int delete(String field, Object value) {
         whereValues.add(WhereParam.builder().key(field).opt("=").value(value).build());
-        this.delete();
+        return this.delete();
     }
 
     private void cleanParam() {

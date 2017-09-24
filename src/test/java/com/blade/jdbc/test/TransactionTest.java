@@ -15,7 +15,7 @@ public class TransactionTest extends BaseTestCase {
             User user = new User();
             user.setPassword("999");
             user.update(42);
-//            int a = 1 / 0;
+            int a = 1 / 0;
             System.out.println("aasdasd");
             return true;
         });
