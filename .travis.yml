@@ -2,5 +2,5 @@ language: java
 jdk:
   - oraclejdk8
 script:
-  - mvn install -Dmaven.test.skip=true
+  - mvn compile -Dmaven.test.skip=true
 
