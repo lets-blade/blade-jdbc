@@ -14,11 +14,11 @@ public class OrderBy implements Supplier<ConditionEnum> {
     }
 
     public static OrderBy asc(String field) {
-        return new OrderBy(field + " asc");
+        return new OrderBy(field + " ASC");
     }
 
     public static OrderBy desc(String field) {
-        return new OrderBy(field + " desc");
+        return new OrderBy(field + " DESC");
     }
 
     public static OrderBy of(String orderBy) {

@@ -4,7 +4,7 @@
 
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.2.2-beta</version>
+    <version>0.2.2-RELEASE</version>
     <packaging>jar</packaging>
 
     <name>blade-jdbc</name>

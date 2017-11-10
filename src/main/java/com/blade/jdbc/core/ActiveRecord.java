@@ -18,11 +18,16 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.blade.jdbc.Const.*;
+
+/**
+ * ActiveRecord Parent Class
+ *
+ * @author biezhi
+ * @date 2017/11/10
+ */
 @Slf4j
 public class ActiveRecord implements Serializable {
-
-    private static final String EXECUTE_SQL_PREFIX = "⬢ Execute SQL";
-    private static final String PARAMETER_PREFIX   = "⬢ Parameters ";
 
     @Transient
     @Setter
@@ -55,7 +60,7 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> T like(String key, Object value) {
-        return this.where(key, "like", value);
+        return this.where(key, "LIKE", value);
     }
 
     public <T extends ActiveRecord> T and(String key, Object value) {
@@ -71,26 +76,19 @@ public class ActiveRecord implements Serializable {
     }
 
     public <T extends ActiveRecord> T or(String key, String opt, Object value) {
-        return this.where(" or " + key, opt, value);
+        return this.where(" OR " + key, opt, value);
     }
 
     public <T extends ActiveRecord, V> T in(String key, List<V> list) {
-        return this.where(key, "in", "(" + list.stream().map(Object::toString).collect(Collectors.joining(",")) + ")");
-    }
-
-    //    TODO
-    public <T extends ActiveRecord> T between(String key, Object val1, Object val2) {
-        // date between ? and ?
-        this.whereValues.add(WhereParam.builder().key(key).opt("between").value(val1).build());
-        this.saveOrUpdateProperties.add(key);
-        return (T) this;
+        return this.where(key, "IN", "(" + list.stream().map(Object::toString).collect(Collectors.joining(",")) + ")");
     }
 
     public <S extends Serializable> S save() {
         QueryMeta queryMeta = SqlBuilder.buildInsertSql(this);
         try (Connection con = getConn()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
-            return (S) con.createQuery(queryMeta.getSql()).bind(this).executeUpdate().getKey();
+            Query query = con.createQuery(queryMeta.getSql()).bind(this);
+            return (S) query.executeUpdate().getKey();
         }
     }
 
@@ -112,7 +110,7 @@ public class ActiveRecord implements Serializable {
 
     public int execute(String sql, Object... params) {
         int pos = 1;
-        while (sql.indexOf("?") != -1) {
+        while (sql.contains(SQL_QM)) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         return invoke(new QueryMeta(sql, params));
@@ -145,12 +143,15 @@ public class ActiveRecord implements Serializable {
         return getSql2o().open();
     }
 
-    public <T> T query(String sql, Object... args) {
+    public <T extends ActiveRecord> T query(String sql, Object... args) {
+        return this.query((Class<T>) getClass(), sql, args);
+    }
+
+    public <T> T query(Class<T> type, String sql, Object... args) {
         int pos = 1;
-        while (sql.indexOf("?") != -1) {
+        while (sql.indexOf(SQL_QM) != -1) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
-        Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
@@ -164,9 +165,13 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    public <T> List<T> queryAll(String sql, Object... args) {
+    public <T extends ActiveRecord> List<T> queryAll(String sql, Object... args) {
+        return this.queryAll((Class<T>) getClass(), sql, args);
+    }
+
+    public <T> List<T> queryAll(Class<T> type, String sql, Object... args) {
         int pos = 1;
-        while (sql.indexOf("?") != -1) {
+        while (sql.indexOf(SQL_QM) != -1) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         PageRow pageRow = Base.pageLocal.get();
@@ -174,7 +179,6 @@ public class ActiveRecord implements Serializable {
         if (null != limit) {
             sql += limit;
         }
-        Class<T> type = (Class<T>) getClass();
         args = args == null ? new Object[]{} : args;
         try (Connection con = getSql2o().open()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
@@ -193,9 +197,8 @@ public class ActiveRecord implements Serializable {
         return this.findAll(null);
     }
 
-    public <T extends ActiveRecord> List<T> findAll(Supplier<ConditionEnum>... conditions) {
+    public <T> List<T> findAll(Class<T> type, Supplier<ConditionEnum>... conditions) {
         QueryMeta queryMeta = SqlBuilder.buildFindAllSql(this, conditions);
-        Class<T>  type      = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
@@ -206,6 +209,10 @@ public class ActiveRecord implements Serializable {
             }
             return query.executeAndFetch(type);
         }
+    }
+
+    public <T extends ActiveRecord> List<T> findAll(Supplier<ConditionEnum>... conditions) {
+        return this.findAll((Class<T>) getClass(), conditions);
     }
 
     public <T extends ActiveRecord> Page<T> page(int page, int limit) {
@@ -235,18 +242,18 @@ public class ActiveRecord implements Serializable {
         int limit = pageRow.getLimit();
         if (null != sql) {
             int pos = 1;
-            while (sql.indexOf("?") != -1) {
+            while (sql.indexOf(SQL_QM) != -1) {
                 sql = sql.replaceFirst("\\?", ":p" + (pos++));
             }
         } else {
-            sql = "select * from " + getTableName();
+            sql = "SELECT * FROM " + getTableName();
         }
 
-        String countSql = "select count(0) from (" + sql + ") tmp";
+        String countSql = "SELECT COUNT(0) FROM (" + sql + ") tmp";
         long   count    = this.count(countSql, params);
 
         if (null != orderBy) {
-            sql += " order by " + orderBy;
+            sql += " ORDER BY " + orderBy;
         }
 
         List<T> list     = this.queryAll(sql, params);
@@ -273,12 +280,10 @@ public class ActiveRecord implements Serializable {
         }
     }
 
-    public <T extends ActiveRecord> T find(Serializable id) {
-        String    sql       = "select * from " + getTableName() + " where " + getPk() + " = :p1";
+    public <T> T find(Class<T> type, Serializable id) {
+        String    sql       = "SELECT * FROM " + getTableName() + " WHERE " + getPk() + " = :p1";
         QueryMeta queryMeta = new QueryMeta();
         SqlBuilder.mapping(queryMeta, this.getClass());
-
-        Class<T> type = (Class<T>) getClass();
         try (Connection con = getSql2o().open()) {
             this.cleanParam();
 
@@ -291,6 +296,10 @@ public class ActiveRecord implements Serializable {
             }
             return query.executeAndFetchFirst(type);
         }
+    }
+
+    public <T extends ActiveRecord> T find(Serializable id) {
+        return find((Class<T>) getClass(), id);
     }
 
     private long count(boolean cleanParam) {
@@ -332,16 +341,16 @@ public class ActiveRecord implements Serializable {
         Class<?> modelType = getClass();
         Table    table     = modelType.getAnnotation(Table.class);
         if (null != table) {
-            return table.value().toLowerCase();
+            return table.value();
         }
-        return modelType.getSimpleName().toLowerCase();
+        return modelType.getSimpleName();
     }
 
     private String getPk() {
         Class<?> modelType = getClass();
         Table    table     = modelType.getAnnotation(Table.class);
         if (null != table) {
-            return table.pk().toLowerCase();
+            return table.pk();
         }
         return "id";
     }
