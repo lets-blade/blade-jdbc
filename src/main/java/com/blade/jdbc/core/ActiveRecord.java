@@ -79,8 +79,8 @@ public class ActiveRecord implements Serializable {
         return this.where(" OR " + key, opt, value);
     }
 
-    public <T extends ActiveRecord, V> T in(String key, List<V> list) {
-        return this.where(key, "IN", "(" + list.stream().map(Object::toString).collect(Collectors.joining(",")) + ")");
+    public <T extends ActiveRecord> T in(String key, List<?> args) {
+        return this.where(key, "IN", args);
     }
 
     public <S extends Serializable> S save() {

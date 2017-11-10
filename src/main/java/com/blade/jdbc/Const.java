@@ -12,10 +12,14 @@ public interface Const {
     String SQL_AND    = "AND";
     String SQL_OR     = "OR";
     String SQL_WHERE  = "WHERE";
+    String SQL_IN     = "IN";
     String SQL_INSERT = "INSERT INTO";
 
     String SQL_QM             = "?";
     String EXECUTE_SQL_PREFIX = "⬢ Execute SQL";
     String PARAMETER_PREFIX   = "⬢ Parameters ";
+
+    char IN_START = '(';
+    char IN_END   = ')';
 
 }

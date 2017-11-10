@@ -247,7 +247,16 @@ class SqlBuilder {
             }
             return activeRecord.whereValues.stream()
                     .map(where -> {
-                        sqlBuf.append(where.getKey()).append(" ").append(where.getOpt()).append(" ").append(":p").append(pos[0]++).append(" AND ");
+                        String c = where.getOpt();
+                        sqlBuf.append(where.getKey()).append(" ").append(c).append(" ");
+                        if (c.equals(SQL_IN)) {
+                            sqlBuf.append(IN_START);
+                        }
+                        sqlBuf.append(":p").append(pos[0]++);
+                        if (c.equals(SQL_IN)) {
+                            sqlBuf.append(IN_END);
+                        }
+                        sqlBuf.append(" AND ");
                         return where.getValue();
                     })
                     .collect(Collectors.toList());
