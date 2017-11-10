@@ -5,6 +5,8 @@ import com.blade.jdbc.core.OrderBy;
 import com.blade.jdbc.test.model.User;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,8 +47,6 @@ public class ReadTest extends BaseTestCase {
         List<User> list = user.where("username", "jack").findAll();
         System.out.println(list);
 
-//        user.where(User::getUsername).is("jack").findAll();
-
         list = user.findAll(Fields.of("username"), OrderBy.desc("id"));
         System.out.println(list);
 
@@ -69,8 +69,12 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test6() {
         User user = new User();
-        System.out.println(user.query("select * from t_user order by id desc"));
-        System.out.println(user.query("select * from t_user where id = ?", 1));
+
+        List<User> list = user.queryAll("select * from t_user order by id desc");
+        System.out.println(list);
+
+        User one = user.query("select * from t_user where id = ?", 1);
+        System.out.println(one);
     }
 
     @Test
@@ -85,6 +89,14 @@ public class ReadTest extends BaseTestCase {
     public void testLike() {
         User       user  = new User();
         List<User> users = user.like("username", "%jac%").and("age", ">", 18).findAll();
+        System.out.println(users);
+    }
+
+    @Test
+    public void testIn() {
+        User          user  = new User();
+        List<Integer> ids   = Arrays.asList(1, 2, 3, 4);
+        List<User>    users = user.in("id", ids).findAll();
         System.out.println(users);
     }
 }

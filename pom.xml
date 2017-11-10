@@ -4,7 +4,7 @@
 
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.2.2-alpha1</version>
+    <version>0.2.2-RELEASE</version>
     <packaging>jar</packaging>
 
     <name>blade-jdbc</name>
@@ -53,8 +53,8 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.16</version>
-            <scope>compile</scope>
+            <version>1.16.18</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

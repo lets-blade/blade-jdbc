@@ -17,6 +17,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.blade.jdbc.Const.*;
+
 /**
  * SQl构造器
  *
@@ -34,11 +36,11 @@ class SqlBuilder {
     static QueryMeta buildInsertSql(ActiveRecord activeRecord) {
         QueryMeta     queryMeta = new QueryMeta();
         String        tableName = activeRecord.getTableName();
-        StringBuilder sb        = new StringBuilder("insert into ");
+        StringBuilder sb        = new StringBuilder(SQL_INSERT + " ");
         sb.append(tableName);
         sb.append(" (");
 
-        StringBuffer values = new StringBuffer(" values (");
+        StringBuffer values = new StringBuffer(" VALUES (");
         Stream.of(activeRecord.getClass().getDeclaredFields())
                 .filter(field -> null == field.getAnnotation(Transient.class))
                 .forEach(field -> {
@@ -71,21 +73,24 @@ class SqlBuilder {
         QueryMeta     queryMeta = new QueryMeta();
         String        sql;
         String        tableName = activeRecord.getTableName();
-        StringBuilder sb        = new StringBuilder("update ");
+        StringBuilder sb        = new StringBuilder("UPDATE ");
         sb.append(tableName);
-        sb.append(" set ");
+        sb.append(" SET ");
 
         final int[]  pos  = {1};
         List<Object> list = parseSet(activeRecord, pos, sb);
 
-        sb.append("where ");
+        sb.append(SQL_WHERE).append(SPACE);
         activeRecord.whereValues.forEach(where -> {
-            sb.append(where.getKey()).append(" ").append(where.getOpt()).append(" ").append(":p").append(pos[0]++).append(" and ");
+            sb.append(where.getKey()).append(SPACE)
+                    .append(where.getOpt()).append(SPACE)
+                    .append(":p").append(pos[0]++).append(SPACE).append(SQL_AND).append(SPACE);
             list.add(where.getValue());
         });
 
-        sql = sb.toString().replace(", where ", " where ").replace("and  or", "or");
-        if (sql.endsWith("and ")) {
+        sql = sb.toString().replace(", " + SQL_WHERE + SPACE, SPACE + SQL_WHERE + SPACE)
+                .replace(SQL_AND + SPACE + SQL_OR, SQL_OR);
+        if (sql.endsWith(SQL_AND + SPACE)) {
             sql = sql.substring(0, sql.length() - 5);
         }
 
@@ -172,7 +177,7 @@ class SqlBuilder {
      */
     static QueryMeta buildCountSql(ActiveRecord activeRecord) {
         QueryMeta     queryMeta = new QueryMeta();
-        StringBuilder sqlBuf    = new StringBuilder("select count(*) from " + activeRecord.getTableName());
+        StringBuilder sqlBuf    = new StringBuilder("SELECT COUNT(*) FROM " + activeRecord.getTableName());
         int[]         pos       = {1};
         List<Object>  list      = parseWhere(activeRecord, pos, sqlBuf);
 
@@ -196,7 +201,7 @@ class SqlBuilder {
      */
     static QueryMeta buildDeleteSql(ActiveRecord activeRecord) {
         QueryMeta     queryMeta = new QueryMeta();
-        StringBuilder sqlBuf    = new StringBuilder("delete from " + activeRecord.getTableName());
+        StringBuilder sqlBuf    = new StringBuilder("DELETE FROM " + activeRecord.getTableName());
 
         int[]        pos  = {1};
         List<Object> list = parseWhere(activeRecord, pos, sqlBuf);
@@ -204,8 +209,8 @@ class SqlBuilder {
         if (activeRecord.whereValues.isEmpty()) {
             throw new RuntimeException("Delete operation must take conditions.");
         } else {
-            if (sqlBuf.indexOf(" where ") == -1) {
-                sqlBuf.append(" where ");
+            if (sqlBuf.indexOf(SPACE + SQL_WHERE + SPACE) == -1) {
+                sqlBuf.append(SPACE + SQL_WHERE + SPACE);
             }
         }
 
@@ -216,8 +221,8 @@ class SqlBuilder {
 
         String sql = sqlBuf.toString();
 
-        sql = sql.replace(", where", " where").replace("and  or", "or");
-        if (sql.endsWith("and ")) {
+        sql = sql.replace(", WHERE", " WHERE").replace("AND  OR", "OR");
+        if (sql.endsWith(SQL_AND + SPACE)) {
             sql = sql.substring(0, sql.length() - 5);
         }
 
@@ -237,12 +242,21 @@ class SqlBuilder {
      */
     private static List<Object> andWhere(ActiveRecord activeRecord, int[] pos, StringBuilder sqlBuf) {
         if (!activeRecord.whereValues.isEmpty()) {
-            if (sqlBuf.indexOf(" where ") == -1) {
-                sqlBuf.append(" where ");
+            if (sqlBuf.indexOf(SPACE + SQL_WHERE + SPACE) == -1) {
+                sqlBuf.append(SPACE + SQL_WHERE + SPACE);
             }
             return activeRecord.whereValues.stream()
                     .map(where -> {
-                        sqlBuf.append(where.getKey()).append(" ").append(where.getOpt()).append(" ").append(":p").append(pos[0]++).append(" and ");
+                        String c = where.getOpt();
+                        sqlBuf.append(where.getKey()).append(" ").append(c).append(" ");
+                        if (c.equals(SQL_IN)) {
+                            sqlBuf.append(IN_START);
+                        }
+                        sqlBuf.append(":p").append(pos[0]++);
+                        if (c.equals(SQL_IN)) {
+                            sqlBuf.append(IN_END);
+                        }
+                        sqlBuf.append(" AND ");
                         return where.getValue();
                     })
                     .collect(Collectors.toList());
@@ -266,12 +280,12 @@ class SqlBuilder {
                     return field.get(activeRecord);
                 }))
                 .map(field -> Unchecked.wrap(() -> {
-                    if (sqlBuf.indexOf(" where ") == -1) {
-                        sqlBuf.append(" where ");
+                    if (sqlBuf.indexOf(SPACE + SQL_WHERE + SPACE) == -1) {
+                        sqlBuf.append(SPACE + SQL_WHERE + SPACE);
                     }
                     Object               value = field.get(activeRecord);
                     Pair<String, String> pair  = getColumnName(field);
-                    sqlBuf.append(pair.getRight()).append(" = ").append(":p").append(pos[0]++).append(" and ");
+                    sqlBuf.append(pair.getRight()).append(" = ").append(":p").append(pos[0]++).append(" AND ");
                     return value;
                 }))
                 .collect(Collectors.toList());
@@ -285,7 +299,7 @@ class SqlBuilder {
      * @return 返回sql语句
      */
     private static String parseFieldsSql(String tableName, Supplier<ConditionEnum>[] conditions) {
-        final String[] sql = {"select * from " + tableName};
+        final String[] sql = {"SELECT * FROM " + tableName};
         if (null == conditions) {
             return sql[0];
         }
@@ -295,7 +309,7 @@ class SqlBuilder {
                 .ifPresent(conditionEnumSupplier -> {
                     Fields      fields    = (Fields) conditionEnumSupplier;
                     Set<String> fieldsSet = fields.getFields();
-                    sql[0] = "select " + fieldsSet.stream().collect(Collectors.joining(",")) + " from " + tableName;
+                    sql[0] = "SELECT " + fieldsSet.stream().collect(Collectors.joining(",")) + " FROM " + tableName;
                 });
         return sql[0];
     }
@@ -307,8 +321,8 @@ class SqlBuilder {
      * @return 返回过滤后的sql
      */
     private static String sqlFilter(String sql) {
-        sql = sql.replace(", where", " where").replace("and  or", "or");
-        if (sql.endsWith(" and ")) {
+        sql = sql.replace(", WHERE", " WHERE").replace("AND  OR", "OR");
+        if (sql.endsWith(SPACE + SQL_AND + SPACE)) {
             sql = sql.substring(0, sql.length() - 5);
         }
         if (sql.endsWith(", ")) {
@@ -321,7 +335,7 @@ class SqlBuilder {
         if (null == pageRow) {
             return null;
         }
-        return String.format(" limit %s, %s", pageRow.getOffset(), pageRow.getLimit());
+        return String.format(" LIMIT %s, %s", pageRow.getOffset(), pageRow.getLimit());
     }
 
     private static String parseOrderBySql(Supplier<ConditionEnum>[] conditions) {
@@ -334,7 +348,7 @@ class SqlBuilder {
                 .findFirst()
                 .ifPresent(conditionEnumSupplier -> {
                     OrderBy orderBy = (OrderBy) conditionEnumSupplier;
-                    sql[0] = " order by " + orderBy.getOrderBy();
+                    sql[0] = " ORDER BY " + orderBy.getOrderBy();
                 });
         return sql[0];
     }
@@ -349,8 +363,7 @@ class SqlBuilder {
                 .map(field -> Unchecked.wrap(() -> {
                     Object               value = field.get(activeRecord);
                     Pair<String, String> pair  = getColumnName(field);
-
-                    sqlBuf.append(pair.getRight()).append(" = ").append(":p").append(pos[0]++).append(", ");
+                    sqlBuf.append(pair.getLeft()).append(" = ").append(":p").append(pos[0]++).append(", ");
                     return value;
                 }))
                 .collect(Collectors.toList());

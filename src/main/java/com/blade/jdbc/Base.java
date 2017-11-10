@@ -18,11 +18,19 @@ public final class Base {
 
     public static Sql2o open(String url, String user, String password) {
         sql2o = new Sql2o(url, user, password);
+        log.info("⬢ Blade-JDBC initializing");
         return sql2o;
     }
 
     public static Sql2o open(DataSource dataSource) {
         sql2o = new Sql2o(dataSource);
+        log.info("⬢ Blade-JDBC initializing");
+        return sql2o;
+    }
+
+    public static Sql2o open(Sql2o sql2o_) {
+        sql2o = sql2o_;
+        log.info("⬢ Blade-JDBC initializing");
         return sql2o;
     }
 
@@ -35,14 +43,12 @@ public final class Base {
     public static <T> T atomic(Supplier<T> supplier) {
         T result = null;
         try {
-            connectionThreadLocal.remove();
-            connectionThreadLocal.set(sql2o.beginTransaction());
-            try (Connection con = connectionThreadLocal.get()) {
-                result = supplier.get();
-                con.commit();
-            }
+            Connection connection = sql2o.beginTransaction();
+            connectionThreadLocal.set(connection);
+            result = supplier.get();
+            connection.commit();
         } catch (RuntimeException e) {
-            log.info("Transaction rollback");
+            log.warn("Transaction rollback");
             connectionThreadLocal.get().rollback();
             throw e;
         } finally {

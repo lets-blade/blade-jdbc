@@ -15,6 +15,9 @@ public class PageTest extends BaseTestCase {
         User       user = new User();
         Page<User> page = user.page(1, 3);
         System.out.println(page);
+
+        page = user.page(1, 3, "age desc");
+        System.out.println(page);
     }
 
     @Test
