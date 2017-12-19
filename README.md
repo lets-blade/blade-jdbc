@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://travis-ci.org/lets-blade/blade-jdbc"><img alt="Travis Status" src="https://img.shields.io/travis/bladejava/blade-jdbc.svg?style=flat-square"></a>
+  <a href="https://travis-ci.org/lets-blade/blade-jdbc"><img alt="Travis Status" src="https://img.shields.io/travis/lets-blade/blade-jdbc.svg?style=flat-square"></a>
   <a href="http://search.maven.org/#search%7Cga%7C1%7Cblade-jdbc"><img alt="npm" src="https://img.shields.io/maven-central/v/com.bladejava/blade-jdbc.svg?style=flat-square"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0.html"><img alt="license" src="https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square"></a>
 </p>
