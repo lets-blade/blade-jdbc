@@ -15,7 +15,6 @@ import org.sql2o.Sql2o;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.blade.jdbc.Const.*;
@@ -171,15 +170,15 @@ public class ActiveRecord implements Serializable {
 
     public <T> List<T> queryAll(Class<T> type, String sql, Object... args) {
         int pos = 1;
-        while (sql.indexOf(SQL_QM) != -1) {
+
+        while (sql.contains(SQL_QM)) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
+
         PageRow pageRow = Base.pageLocal.get();
-        String  limit   = SqlBuilder.appendLimit(pageRow);
-        if (null != limit) {
-            sql += limit;
-        }
+        sql = SqlBuilder.appendPageParams(sql, pageRow);
         args = args == null ? new Object[]{} : args;
+
         try (Connection con = getSql2o().open()) {
             log.debug(EXECUTE_SQL_PREFIX + " => {}", sql);
             log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(args));
@@ -242,7 +241,7 @@ public class ActiveRecord implements Serializable {
         int limit = pageRow.getLimit();
         if (null != sql) {
             int pos = 1;
-            while (sql.indexOf(SQL_QM) != -1) {
+            while (sql.contains(SQL_QM)) {
                 sql = sql.replaceFirst("\\?", ":p" + (pos++));
             }
         } else {
@@ -322,7 +321,7 @@ public class ActiveRecord implements Serializable {
 
     public long count(String sql, Object... args) {
         int pos = 1;
-        while (sql.indexOf("?") != -1) {
+        while (sql.contains("?")) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         args = args == null ? new Object[]{} : args;

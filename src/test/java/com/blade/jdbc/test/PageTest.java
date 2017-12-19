@@ -16,7 +16,7 @@ public class PageTest extends BaseTestCase {
         Page<User> page = user.page(1, 3);
         System.out.println(page);
 
-        page = user.page(1, 3, "age desc");
+        page = user.page(1, 3, "age DESC");
         System.out.println(page);
     }
 
@@ -38,7 +38,7 @@ public class PageTest extends BaseTestCase {
     public void test4() {
         User         user         = new User();
         Page<User>   page         = user.page(1, 10);
-        Page<String> userNamePage = page.map(u -> u.getUsername());
+        Page<String> userNamePage = page.map(User::getUsername);
         System.out.println(userNamePage);
     }
 

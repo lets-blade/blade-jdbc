@@ -15,45 +15,75 @@ import java.util.stream.Collectors;
 @Data
 public class Page<T> {
 
-    // 当前页
-    private int  pageNum    = 1;
-    // 每页多少条
-    private int  limit      = 10;
-    // 上一页
-    private int  prevPage   = 1;
-    // 下一页
+    /**
+     * 当前页
+     */
+    private int pageNum = 1;
+
+    /**
+     * 每页多少条
+     */
+    private int limit = 10;
+
+    /**
+     * 上一页
+     */
+    private int prevPage = 1;
+
+    /**
+     * 下一页
+     */
     private int  nextPage   = 1;
-    // 总页数
+
+    /**
+     * 总页数
+     */
     private int  totalPages = 1;
-    // 总记录数
+
+    /**
+     * 总记录数
+     */
     private long totalRows  = 0L;
-    // 记录行
+
+    /**
+     * 记录行
+     */
     private List<T> rows;
-    //是否为第一页
+
+    /**
+     * 是否为第一页
+     */
     private boolean isFirstPage = false;
 
-    //是否为最后一页
+    /**
+     * 是否为最后一页
+     */
     private boolean isLastPage = false;
 
-    //是否有前一页
+    /**
+     * 是否有前一页
+     */
     private boolean hasPrevPage = false;
 
-    //是否有下一页
+    /**
+     * 是否有下一页
+     */
     private boolean hasNextPage = false;
 
-    //导航页码数
+    /**
+     * 导航页码数
+     */
     private int navPages = 8;
 
-    //所有导航页号
+    /**
+     * 所有导航页号
+     */
     private int[] navPageNums;
 
     public <R> Page<R> map(Function<? super T, ? extends R> mapper) {
         Page<R> page = new Page<>(this.totalRows, this.pageNum, this.limit);
         page.setRows(rows.stream().map(mapper).collect(Collectors.toList()));
         return page;
-    }
-
-    public Page() {
     }
 
     public Page(long total, int page, int limit) {

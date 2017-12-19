@@ -156,10 +156,7 @@ class SqlBuilder {
         }
 
         PageRow pageRow = Base.pageLocal.get();
-        String  limit   = appendLimit(pageRow);
-        if (null != limit) {
-            sql += limit;
-        }
+        sql = appendPageParams(sql, pageRow);
 
         Object[] args = list.toArray();
 
@@ -331,11 +328,17 @@ class SqlBuilder {
         return sql;
     }
 
-    public static String appendLimit(PageRow pageRow) {
+    /**
+     * 添加分页语句
+     *
+     * @param pageRow
+     * @return
+     */
+    public static String appendPageParams(String sql, PageRow pageRow) {
         if (null == pageRow) {
-            return null;
+            return sql;
         }
-        return String.format(" LIMIT %s, %s", pageRow.getOffset(), pageRow.getLimit());
+        return Base.dialect.getPagingSql(sql, pageRow);
     }
 
     private static String parseOrderBySql(Supplier<ConditionEnum>[] conditions) {

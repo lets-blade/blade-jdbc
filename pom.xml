@@ -4,7 +4,7 @@
 
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.2.2-RELEASE</version>
+    <version>0.2.3-Alpha1</version>
     <packaging>jar</packaging>
 
     <name>blade-jdbc</name>
@@ -49,6 +49,12 @@
             <artifactId>sql2o</artifactId>
             <version>1.6.0-RC3</version>
         </dependency>
+
+        <!--<dependency>
+            <groupId>org.sql2o.extensions</groupId>
+            <artifactId>sql2o-postgres</artifactId>
+            <version>1.6.0-RC3</version>
+        </dependency>-->
 
         <dependency>
             <groupId>org.projectlombok</groupId>
