@@ -4,13 +4,16 @@
 [![maven-central](https://img.shields.io/maven-central/v/com.bladejava/blade-jdbc.svg?style=flat-square)](http://search.maven.org/#search%7Cga%7C1%7Cblade-jdbc)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
+[文档地址](http://jdbc.lets-blade.com)
+
 ## 特性
 
 - 语法简洁，代码量少
 - 不依赖第三方框架(除了日志接口)
 - DSL风格，让程序写起来像一条链
 - 内置连接池，支持其他连接池
-- 可无缝结合spring
+- 可在任意 Java 项目中使用
+- JDK8+
 
 废话少说，上车请看 test code.
 
