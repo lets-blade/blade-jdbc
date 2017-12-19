@@ -81,3 +81,7 @@ local.properties
 .worksheet
 
 /target/
+
+/.idea/
+
+*.iml
