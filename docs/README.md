@@ -246,3 +246,38 @@ Base.atomic(() -> {
     return true;
 });
 ```
+
+## 更新日志
+
+### v0.0.1-RELEASE
+
+1. 支持多数据库 (mysql, oracle, db2, postgresql)
+2. 修复事务回滚连接已关闭bug
+3. 分离核心依赖
+
+### v0.2.2
+
+1. 修复 `in` 查询问题
+2. 添加单条自定义类型查询
+3. 添加查询自定义类型列表
+4. SQL关键词大写
+
+### v0.2.0
+
+1. 使用Java8重构
+2. 更好的操作ActiveRecord
+
+### v0.1.6
+
+1. 修复分页bug
+
+### v0.1.6-alpha
+
+1. 取消Spring支持
+2. 添加返回 `Sql2o`, `DataSource`, `Connection` 对象
+3. 添加 `saveOrUpdate` 方法
+4. 添加查询列表可分页
+5. 添加 `in` 可传入 `List`
+6. 修复分页传入数据小于0
+7. 修复自定义列名bug
+8. 重写事务实现
