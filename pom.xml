@@ -7,12 +7,12 @@
     <version>0.0.1-RELEASE</version>
     <packaging>pom</packaging>
 
-    <!--<modules>
+    <modules>
         <module>blade-jdbc-core</module>
         <module>blade-jdbc-postgresql</module>
         <module>blade-jdbc-oracle</module>
         <module>blade-jdbc-db2</module>
-    </modules>-->
+    </modules>
 
     <name>blade-jdbc</name>
     <url>https://github.com/lets-blade/blade-jdbc</url>
