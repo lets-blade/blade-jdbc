@@ -1,0 +1,2 @@
+Library-Name: Sql2o.extensions.oracle
+Library-Description: Oracle plugin for sql2o

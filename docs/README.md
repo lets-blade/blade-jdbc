@@ -28,7 +28,7 @@ VALUES
 
 ## 配置 Blade-JDBC
 
-先引入 `mysql-connector-java` 和 `blade-jdbc` 的较新版本。
+先引入 `mysql-connector-java` 和 `blade-jdbc-core` 的较新版本。
 
 ```xml
 <dependency>
@@ -38,10 +38,13 @@ VALUES
 </dependency>
 <dependency>
     <groupId>com.bladejava</groupId>
-    <artifactId>blade-jdbc</artifactId>
-    <version>0.2.3-RELEASE</version>
+    <artifactId>blade-jdbc-core</artifactId>
+    <version>0.0.1-RELEASE</version>
 </dependency>
 ```
+
+> blade-jdbc-core 支持 MySQL 和 SQLite，如需使用 postgresql 或者 oracle 需添加
+> `blade-jdbc-postgresql` / `blade-jdbc-oracle`
 
 加载数据库并配置数据库
 

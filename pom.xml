@@ -4,11 +4,18 @@
 
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.2.3-RELEASE</version>
-    <packaging>jar</packaging>
+    <version>0.0.1-RELEASE</version>
+    <packaging>pom</packaging>
+
+    <!--<modules>
+        <module>blade-jdbc-core</module>
+        <module>blade-jdbc-postgresql</module>
+        <module>blade-jdbc-oracle</module>
+        <module>blade-jdbc-db2</module>
+    </modules>-->
 
     <name>blade-jdbc</name>
-    <url>https://github.com/bladejava/blade-jdbc</url>
+    <url>https://github.com/lets-blade/blade-jdbc</url>
     <description>blade jdbc</description>
 
     <licenses>
@@ -17,6 +24,7 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
+
     <developers>
         <developer>
             <name>biezhi</name>
@@ -39,28 +47,14 @@
         <hikaricp.version>2.4.1</hikaricp.version>
         <druid.version>1.0.24</druid.version>
         <slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
-        <fastjson.version>1.2.16</fastjson.version>
+        <sql2o.version>1.6.0-RC3</sql2o.version>
     </properties>
 
     <dependencies>
-
         <dependency>
             <groupId>org.sql2o</groupId>
             <artifactId>sql2o</artifactId>
-            <version>1.6.0-RC3</version>
-        </dependency>
-
-        <!--<dependency>
-            <groupId>org.sql2o.extensions</groupId>
-            <artifactId>sql2o-postgres</artifactId>
-            <version>1.6.0-RC3</version>
-        </dependency>-->
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.16.18</version>
-            <scope>provided</scope>
+            <version>${sql2o.version}</version>
         </dependency>
 
         <dependency>
@@ -74,26 +68,6 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--<dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${mysql.version}</version>
-            <scope>test</scope>
-        </dependency>-->
-
-        <dependency>
-            <groupId>org.sql2o.extensions</groupId>
-            <artifactId>sql2o-postgres</artifactId>
-            <version>1.6.0-RC3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.1.4</version>
             <scope>test</scope>
         </dependency>
 
@@ -118,7 +92,18 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.18</version>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
+
+    <dependencyManagement>
+
+    </dependencyManagement>
 
     <repositories>
         <repository>
