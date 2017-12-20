@@ -32,6 +32,7 @@
 ### v0.2.3
 
 1. 支持多数据库 (mysql, oracle, db2, postgresql)
+2. 修复事务回滚连接已关闭bug
 
 ### v0.2.2
 

@@ -14,7 +14,7 @@ CREATE TABLE `t_user` (
   `real_name` varchar(20) DEFAULT NULL,
   `age` int(10) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 
 INSERT INTO `t_user` (`id`, `username`, `password`, `real_name`, `age`)
 VALUES
@@ -39,7 +39,7 @@ VALUES
 <dependency>
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.2.2-RELEASE</version>
+    <version>0.2.3-RELEASE</version>
 </dependency>
 ```
 
