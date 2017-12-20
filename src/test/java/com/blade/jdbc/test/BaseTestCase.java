@@ -18,6 +18,13 @@ public class BaseTestCase {
 
     @Before
     public void before() {
+//        HikariConfig config =this.mysql();
+        HikariConfig     config = this.pgsql();
+        HikariDataSource ds     = new HikariDataSource(config);
+        Base.open(ds);
+    }
+
+    private HikariConfig mysql() {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://localhost:3306/demo");
         config.setUsername("root");
@@ -25,10 +32,18 @@ public class BaseTestCase {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        return config;
+    }
 
-        HikariDataSource ds = new HikariDataSource(config);
-        Base.open(ds);
-//        Base.open("jdbc:mysql://localhost:3306/demo", "root", "123456");
+    private HikariConfig pgsql() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/demo");
+        config.setUsername("biezhi");
+        config.setPassword("123456");
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        return config;
     }
 
 }

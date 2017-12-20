@@ -77,10 +77,23 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>
+            <scope>test</scope>
+        </dependency>-->
+
+        <dependency>
+            <groupId>org.sql2o.extensions</groupId>
+            <artifactId>sql2o-postgres</artifactId>
+            <version>1.6.0-RC3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.1.4</version>
             <scope>test</scope>
         </dependency>
 

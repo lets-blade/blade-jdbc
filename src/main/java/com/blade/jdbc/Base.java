@@ -72,15 +72,12 @@ public final class Base {
      */
     public static <T> T atomic(Supplier<T> supplier) {
         T result = null;
-        try {
-            Connection connection = sql2o.beginTransaction();
+        try (Connection connection = sql2o.beginTransaction()) {
             connectionThreadLocal.set(connection);
             result = supplier.get();
             connection.commit();
-        } catch (RuntimeException e) {
-            log.warn("Transaction rollback");
-            connectionThreadLocal.get().rollback();
-            throw e;
+        } catch (Exception e) {
+            log.error("Transaction rollback", e);
         } finally {
             connectionThreadLocal.remove();
             return result;

@@ -83,12 +83,16 @@ public class ActiveRecord implements Serializable {
     }
 
     public <S extends Serializable> S save() {
-        QueryMeta queryMeta = SqlBuilder.buildInsertSql(this);
-        try (Connection con = getConn()) {
-            log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
-            Query query = con.createQuery(queryMeta.getSql()).bind(this);
-            return (S) query.executeUpdate().getKey();
+        QueryMeta  queryMeta = SqlBuilder.buildInsertSql(this);
+        Connection con       = getConn();
+        log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
+        log.debug(PARAMETER_PREFIX + " => {}", this);
+        Query query = con.createQuery(queryMeta.getSql()).bind(this);
+        S     s     = (S) query.executeUpdate().getKey();
+        if (null == Base.connectionThreadLocal.get()) {
+            con.commit();
         }
+        return s;
     }
 
     public int update(Serializable pk) {
@@ -118,20 +122,16 @@ public class ActiveRecord implements Serializable {
     private int invoke(QueryMeta queryMeta) {
         log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
         log.debug(PARAMETER_PREFIX + " => {}", Arrays.toString(queryMeta.getParams()));
-        Connection con = getConn();
-        try {
-            Query query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
-            if (queryMeta.hasColumnMapping()) {
-                queryMeta.getColumnMapping().forEach(query::addColumnMapping);
-            }
-            return query.executeUpdate().getResult();
-        } finally {
-            if (Base.connectionThreadLocal.get() == null) {
-                if (null != con) {
-                    con.close();
-                }
-            }
+        Connection con   = getConn();
+        Query      query = con.createQuery(queryMeta.getSql()).withParams(queryMeta.getParams());
+        if (queryMeta.hasColumnMapping()) {
+            queryMeta.getColumnMapping().forEach(query::addColumnMapping);
         }
+        int result = query.executeUpdate().getResult();
+        if (null == Base.connectionThreadLocal.get()) {
+            con.commit();
+        }
+        return result;
     }
 
     private Connection getConn() {
@@ -148,7 +148,7 @@ public class ActiveRecord implements Serializable {
 
     public <T> T query(Class<T> type, String sql, Object... args) {
         int pos = 1;
-        while (sql.indexOf(SQL_QM) != -1) {
+        while (sql.contains(SQL_QM)) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
         try (Connection con = getSql2o().open()) {
