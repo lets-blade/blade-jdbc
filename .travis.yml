@@ -1,7 +1,6 @@
 language: java
 jdk:
   - oraclejdk8
-  env:
-    - CMD="mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
-
+script:
+  - mvn compile -Dmaven.test.skip=true
 
