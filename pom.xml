@@ -4,7 +4,7 @@
 
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.0.1-RELEASE</version>
+    <version>0.0.2-RELEASE</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -102,14 +102,14 @@
     </dependencies>
 
     <repositories>
-        <repository>
-            <id>public</id>
-            <name>aliyun nexus</name>
-            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
+        <!--<repository>-->
+        <!--<id>public</id>-->
+        <!--<name>aliyun nexus</name>-->
+        <!--<url>http://maven.aliyun.com/nexus/content/groups/public/</url>-->
+        <!--<releases>-->
+        <!--<enabled>true</enabled>-->
+        <!--</releases>-->
+        <!--</repository>-->
         <repository>
             <id>oss-releases</id>
             <url>https://oss.sonatype.org/content/repositories/releases</url>
