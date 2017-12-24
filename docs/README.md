@@ -39,7 +39,7 @@ VALUES
 <dependency>
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc-core</artifactId>
-    <version>0.0.1-RELEASE</version>
+    <version>0.0.2-RELEASE</version>
 </dependency>
 ```
 

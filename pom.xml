@@ -4,7 +4,7 @@
 
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc</artifactId>
-    <version>0.0.1-RELEASE</version>
+    <version>0.0.2-RELEASE</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -101,16 +101,30 @@
 
     </dependencies>
 
-    <dependencyManagement>
-
-    </dependencyManagement>
-
     <repositories>
+        <!--<repository>-->
+        <!--<id>public</id>-->
+        <!--<name>aliyun nexus</name>-->
+        <!--<url>http://maven.aliyun.com/nexus/content/groups/public/</url>-->
+        <!--<releases>-->
+        <!--<enabled>true</enabled>-->
+        <!--</releases>-->
+        <!--</repository>-->
+        <repository>
+            <id>oss-releases</id>
+            <url>https://oss.sonatype.org/content/repositories/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>oss-snapshots</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <releases>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
@@ -124,11 +138,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.5.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
             <!--  Test  -->
