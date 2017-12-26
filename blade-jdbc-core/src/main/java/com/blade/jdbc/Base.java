@@ -16,7 +16,7 @@ public final class Base {
     public static final ThreadLocal<Connection> connectionThreadLocal = new ThreadLocal<>();
 
     public static Sql2o   sql2o;
-    public static Dialect dialect;
+    public static Dialect dialect = new MySQLDialect();
 
     public static Sql2o open(String url, String user, String password) {
         sql2o = new Sql2o(url, user, password);
