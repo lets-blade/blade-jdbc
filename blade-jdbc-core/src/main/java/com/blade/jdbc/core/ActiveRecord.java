@@ -13,6 +13,7 @@ import org.sql2o.Query;
 import org.sql2o.Sql2o;
 
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -116,7 +117,11 @@ public class ActiveRecord implements Serializable {
         while (sql.contains(SQL_QM)) {
             sql = sql.replaceFirst("\\?", ":p" + (pos++));
         }
-        return invoke(new QueryMeta(sql, params));
+        try {
+            return invoke(new QueryMeta(sql, params));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private int invoke(QueryMeta queryMeta) {
@@ -128,8 +133,12 @@ public class ActiveRecord implements Serializable {
             queryMeta.getColumnMapping().forEach(query::addColumnMapping);
         }
         int result = query.executeUpdate().getResult();
-        if (null == Base.connectionThreadLocal.get()) {
-            con.commit();
+        try {
+            if (null == Base.connectionThreadLocal.get() && !con.getJdbcConnection().getAutoCommit()) {
+                con.commit();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return result;
     }
@@ -139,7 +148,8 @@ public class ActiveRecord implements Serializable {
         if (null != connection) {
             return connection;
         }
-        return getSql2o().open();
+        connection = getSql2o().open();
+        return connection;
     }
 
     public <T extends ActiveRecord> T query(String sql, Object... args) {

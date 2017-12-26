@@ -86,6 +86,9 @@ public class Page<T> {
         return page;
     }
 
+    public Page() {
+    }
+
     public Page(long total, int page, int limit) {
         init(total, page, limit);
     }
