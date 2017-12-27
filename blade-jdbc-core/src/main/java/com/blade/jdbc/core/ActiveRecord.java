@@ -89,11 +89,15 @@ public class ActiveRecord implements Serializable {
         log.debug(EXECUTE_SQL_PREFIX + " => {}", queryMeta.getSql());
         log.debug(PARAMETER_PREFIX + " => {}", this);
         Query query = con.createQuery(queryMeta.getSql()).bind(this);
-        S     s     = (S) query.executeUpdate().getKey();
-        if (null == Base.connectionThreadLocal.get()) {
-            con.commit();
+        try {
+            S s = (S) query.executeUpdate().getKey();
+            if (null == Base.connectionThreadLocal.get() && !con.getJdbcConnection().getAutoCommit()) {
+                con.commit();
+            }
+            return s;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return s;
     }
 
     public int update(Serializable pk) {
