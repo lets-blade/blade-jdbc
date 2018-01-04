@@ -1,13 +1,13 @@
 package com.blade.jdbc.core;
 
-import com.blade.jdbc.Const;
-import com.blade.jdbc.utils.NameUtils;
-import com.blade.jdbc.utils.StringUtils;
 import com.blade.jdbc.Base;
+import com.blade.jdbc.Const;
 import com.blade.jdbc.annotation.Column;
 import com.blade.jdbc.annotation.Transient;
 import com.blade.jdbc.page.PageRow;
+import com.blade.jdbc.utils.NameUtils;
 import com.blade.jdbc.utils.Pair;
+import com.blade.jdbc.utils.StringUtils;
 import com.blade.jdbc.utils.Unchecked;
 
 import java.lang.reflect.Field;
@@ -153,7 +153,10 @@ class SqlBuilder {
         if (null != orderBy) {
             sql += orderBy;
         }
-
+        String limit = parseLimitSql(conditions);
+        if (null != limit) {
+            sql += limit;
+        }
         PageRow pageRow = Base.pageLocal.get();
         sql = appendPageParams(sql, pageRow);
 
@@ -188,7 +191,24 @@ class SqlBuilder {
         queryMeta.setParams(args);
         return queryMeta;
     }
-
+    static String parseLimitSql(Supplier<ConditionEnum>... conditions) {
+        final String[] sql = {null};
+        if (null == conditions) {
+            return sql[0];
+        }
+        Stream.of(conditions)
+                .filter(conditionEnumSupplier -> conditionEnumSupplier.get().equals(ConditionEnum.LIMIT))
+                .findFirst()
+                .ifPresent(conditionEnumSupplier -> {
+                    Limit limit = (Limit) conditionEnumSupplier;
+                    if (limit.getOffset() > 0) {
+                        sql[0] = " LIMIT " + limit.getOffset()+","+limit.getRow();
+                    }else {
+                        sql[0] = " LIMIT "+limit.getRow();
+                    }
+                });
+        return sql[0];
+    }
     /**
      * 构造一个删除SQL
      *

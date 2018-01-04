@@ -1,6 +1,7 @@
 package com.blade.jdbc.test;
 
 import com.blade.jdbc.core.Fields;
+import com.blade.jdbc.core.Limit;
 import com.blade.jdbc.core.OrderBy;
 import com.blade.jdbc.test.model.User;
 import org.junit.Test;
@@ -18,9 +19,7 @@ public class ReadTest extends BaseTestCase {
         User       user  = new User();
         List<User> users = user.findAll();
         System.out.println(users);
-
         user.setId(1);
-        users = user.findAll();
         System.out.println(users);
 
         user.where("id", 2);
@@ -35,9 +34,8 @@ public class ReadTest extends BaseTestCase {
     @Test
     public void test2() {
         User user = new User();
-        // select * from t_user where id = ?
-        User u1 = user.find(1);
-        System.out.println(u1);
+        List<User> users = user.findAll(Limit.of(5,5),OrderBy.desc("id"));
+        System.out.println(users);
     }
 
     @Test
