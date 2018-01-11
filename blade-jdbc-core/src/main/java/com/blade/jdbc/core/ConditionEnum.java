@@ -5,6 +5,6 @@ package com.blade.jdbc.core;
  */
 public enum ConditionEnum {
 
-    FIELDS, ORDER_BY
+    FIELDS, ORDER_BY, LIMIT
 
 }

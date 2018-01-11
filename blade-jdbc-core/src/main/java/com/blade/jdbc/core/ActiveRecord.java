@@ -13,7 +13,6 @@ import org.sql2o.Query;
 import org.sql2o.Sql2o;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -82,7 +81,6 @@ public class ActiveRecord implements Serializable {
     public <T extends ActiveRecord> T in(String key, List<?> args) {
         return this.where(key, "IN", args);
     }
-
     public <S extends Serializable> S save() {
         QueryMeta  queryMeta = SqlBuilder.buildInsertSql(this);
         Connection con       = getConn();
