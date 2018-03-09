@@ -98,4 +98,17 @@ public class ReadTest extends BaseTestCase {
         List<User>    users = user.in("id", ids).findAll();
         System.out.println(users);
     }
+
+    @Test
+    public void testIsNull() {
+        new User().isNull("username").count();
+        new User().gt("age", 10).isNull("username").count();
+    }
+
+    @Test
+    public void testIsNotNull() {
+        new User().isNotNull("username").count();
+        new User().gt("age", 10).isNotNull("username").count();
+    }
+
 }

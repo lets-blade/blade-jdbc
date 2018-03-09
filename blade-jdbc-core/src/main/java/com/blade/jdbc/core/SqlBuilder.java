@@ -81,10 +81,16 @@ class SqlBuilder {
 
         sb.append(Const.SQL_WHERE).append(Const.SPACE);
         activeRecord.whereValues.forEach(where -> {
-            sb.append(where.getKey()).append(Const.SPACE)
-                    .append(where.getOpt()).append(Const.SPACE)
-                    .append(":p").append(pos[0]++).append(Const.SPACE).append(Const.SQL_AND).append(Const.SPACE);
-            list.add(where.getValue());
+            if ("IS".equals(where.getOpt())) {
+                sb.append(where.getKey()).append(Const.SPACE)
+                        .append(where.getValue()).append(Const.SPACE).append(Const.SQL_AND).append(Const.SPACE);
+                list.add(where.getValue());
+            } else {
+                sb.append(where.getKey()).append(Const.SPACE)
+                        .append(where.getOpt()).append(Const.SPACE)
+                        .append(":p").append(pos[0]++).append(Const.SPACE).append(Const.SQL_AND).append(Const.SPACE);
+                list.add(where.getValue());
+            }
         });
 
         sql = sb.toString().replace(", " + Const.SQL_WHERE + Const.SPACE, Const.SPACE + Const.SQL_WHERE + Const.SPACE)
@@ -243,18 +249,24 @@ class SqlBuilder {
             }
             return activeRecord.whereValues.stream()
                     .map(where -> {
-                        String c = where.getOpt();
-                        sqlBuf.append(where.getKey()).append(" ").append(c).append(" ");
-                        if (c.equals(Const.SQL_IN)) {
-                            sqlBuf.append(Const.IN_START);
-                        }
-                        sqlBuf.append(":p").append(pos[0]++);
-                        if (c.equals(Const.SQL_IN)) {
-                            sqlBuf.append(Const.IN_END);
+                        if ("IS".equals(where.getOpt())) {
+                            sqlBuf.append(where.getKey()).append(" ").append(where.getValue());
+                            return null;
+                        } else {
+                            String c = where.getOpt();
+                            sqlBuf.append(where.getKey()).append(" ").append(c).append(" ");
+                            if (c.equals(Const.SQL_IN)) {
+                                sqlBuf.append(Const.IN_START);
+                            }
+                            sqlBuf.append(":p").append(pos[0]++);
+                            if (c.equals(Const.SQL_IN)) {
+                                sqlBuf.append(Const.IN_END);
+                            }
                         }
                         sqlBuf.append(" AND ");
                         return where.getValue();
                     })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         }
         return null;
