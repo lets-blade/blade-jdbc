@@ -10,7 +10,6 @@
     <modules>
         <module>blade-jdbc-core</module>
         <module>blade-jdbc-postgresql</module>
-        <module>blade-jdbc-oracle</module>
         <module>blade-jdbc-db2</module>
     </modules>
 

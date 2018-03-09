@@ -62,6 +62,34 @@ public class ActiveRecord implements Serializable {
         return this.where(key, "LIKE", value);
     }
 
+    public <T extends ActiveRecord> T gt(String key, Object value) {
+        return this.where(key, ">", value);
+    }
+
+    public <T extends ActiveRecord> T gte(String key, Object value) {
+        return this.where(key, ">=", value);
+    }
+
+    public <T extends ActiveRecord> T lt(String key, Object value) {
+        return this.where(key, "<", value);
+    }
+
+    public <T extends ActiveRecord> T let(String key, Object value) {
+        return this.where(key, "<=", value);
+    }
+
+    public <T extends ActiveRecord> T notEqual(String key, Object value) {
+        return this.where(key, "<>", value);
+    }
+
+    public <T extends ActiveRecord> T isNull(String key) {
+        return this.where(key, "IS", "IS NULL");
+    }
+
+    public <T extends ActiveRecord> T isNotNull(String key) {
+        return this.where(key, "IS", "IS NOT NULL");
+    }
+
     public <T extends ActiveRecord> T and(String key, Object value) {
         return this.where(key, value);
     }

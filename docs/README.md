@@ -39,12 +39,11 @@ VALUES
 <dependency>
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc-core</artifactId>
-    <version>0.0.2-RELEASE</version>
+    <version>0.0.4-RELEASE</version>
 </dependency>
 ```
 
-> blade-jdbc-core 支持 MySQL 和 SQLite，如需使用 postgresql 或者 oracle 需添加
-> `blade-jdbc-postgresql` / `blade-jdbc-oracle`
+> blade-jdbc-core 支持 MySQL 和 SQLite，如需使用 `postgresql` 需添加 `blade-jdbc-postgresql` 依赖 
 
 加载数据库并配置数据库
 
@@ -248,6 +247,12 @@ Base.atomic(() -> {
 ```
 
 ## 更新日志
+
+### v0.0.4-RELEASE
+
+1. 暂时去除 `oracle` 支持
+2. 修复 `MyiSAM` 存储引擎下自动 `commit` bug
+3. 添加 `gt`、`lt`、`isNull`、`isNotNull` 方法
 
 ### v0.0.1-RELEASE
 

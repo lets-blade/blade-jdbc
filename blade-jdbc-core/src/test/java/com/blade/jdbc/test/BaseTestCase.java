@@ -12,8 +12,8 @@ public class BaseTestCase {
 
     @Before
     public void before() {
-//        HikariConfig config =this.mysql();
-        HikariConfig     config = this.pgsql();
+        HikariConfig config = this.mysql();
+//        HikariConfig     config = this.pgsql();
         HikariDataSource ds     = new HikariDataSource(config);
         Base.open(ds);
     }
