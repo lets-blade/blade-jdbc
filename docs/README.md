@@ -39,7 +39,7 @@ VALUES
 <dependency>
     <groupId>com.bladejava</groupId>
     <artifactId>blade-jdbc-core</artifactId>
-    <version>0.0.4-RELEASE</version>
+    <version>0.0.5-RELEASE</version>
 </dependency>
 ```
 
@@ -248,7 +248,7 @@ Base.atomic(() -> {
 
 ## 更新日志
 
-### v0.0.4-RELEASE
+### v0.0.5-RELEASE
 
 1. 暂时去除 `oracle` 支持
 2. 修复 `MyiSAM` 存储引擎下自动 `commit` bug
